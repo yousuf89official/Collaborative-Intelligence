@@ -1,0 +1,291 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String      @id @default(cuid())
+  email     String      @unique
+  password  String
+  name      String?
+  role      String      @default("user")
+  status    String      @default("Active")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  invoices  Invoice[]
+  brands    UserBrand[]
+  igExtractions IgExtraction[]
+  ttExtractions TtExtraction[]
+}
+
+model UserBrand {
+  id        String   @id @default(cuid())
+  userId    String
+  brandId   String
+  role      String   @default("member") // owner, admin, member, viewer
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, brandId])
+  @@index([brandId])
+}
+
+model Brand {
+  id                String           @id @default(cuid())
+  name              String
+  slug              String           @unique
+  industryId        String?
+  industrySubTypeId String?
+  website           String?
+  logo              String?
+  status            String           @default("Active")
+  defaultCurrency   String           @default("USD")
+  brandColor        String?
+  brandFontColor    String           @default("#000000")
+  description       String?
+  wallpapers        String?          // Stored as JSON string list
+  productImages     String?          // Stored as JSON string list
+  pricingModel      String?          // Stored as JSON string
+  socialLinks       String?          // Stored as JSON string
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  subTypeRelation   IndustrySubType? @relation(fields: [industrySubTypeId], references: [id])
+  industryRelation  Industry?        @relation(fields: [industryId], references: [id])
+  campaigns         Campaign[]
+  integrations      Integration[]
+  metrics           Metric[]
+  shareLinks        ShareLink[]
+  users             UserBrand[]
+}
+
+model Industry {
+  id        String            @id @default(cuid())
+  name      String            @unique
+  slug      String            @unique
+  createdAt DateTime          @default(now())
+  brands    Brand[]
+  subTypes  IndustrySubType[]
+}
+
+model IndustrySubType {
+  id         String   @id @default(cuid())
+  name       String
+  slug       String   @unique
+  industryId String
+  createdAt  DateTime @default(now())
+  brands     Brand[]
+  industry   Industry @relation(fields: [industryId], references: [id])
+}
+
+model Campaign {
+  id            String            @id @default(cuid())
+  name          String
+  slug          String
+  description   String?
+  startDate     DateTime?
+  endDate       DateTime?
+  budgetPlanned Float             @default(0)
+  currency      String?
+  timezone      String            @default("UTC")
+  status        String            @default("Active")
+  brandId       String
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  brand         Brand             @relation(fields: [brandId], references: [id])
+  channels      CampaignChannel[]
+  metrics       Metric[]
+  subCampaigns  SubCampaign[]
+}
+
+model SubCampaign {
+  id             String               @id @default(cuid())
+  name           String
+  slug           String
+  status         String               @default("Active")
+  description    String?
+  startDate      DateTime?
+  endDate        DateTime?
+  budgetPlanned  Float                @default(0)
+  region         String?
+  country        String?
+  targetAudience String?
+  configuration  String?
+  campaignId     String
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  metrics        Metric[]
+  campaign       Campaign             @relation(fields: [campaignId], references: [id])
+  channels       SubCampaignChannel[]
+}
+
+model Platform {
+  id       String    @id @default(cuid())
+  name     String
+  slug     String    @unique
+  status   String    @default("Active")
+  channels Channel[]
+}
+
+model Channel {
+  id           String               @id @default(cuid())
+  name         String
+  slug         String               @unique
+  status       String               @default("Active")
+  platformId   String
+  campaigns    CampaignChannel[]
+  platform     Platform             @relation(fields: [platformId], references: [id])
+  metrics      Metric[]
+  subCampaigns SubCampaignChannel[]
+}
+
+model CampaignChannel {
+  id         String   @id @default(cuid())
+  campaignId String
+  channelId  String
+  channel    Channel  @relation(fields: [channelId], references: [id])
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+
+  @@unique([campaignId, channelId])
+}
+
+model SubCampaignChannel {
+  id            String      @id @default(cuid())
+  subCampaignId String
+  channelId     String
+  channel       Channel     @relation(fields: [channelId], references: [id])
+  subCampaign   SubCampaign @relation(fields: [subCampaignId], references: [id])
+
+  @@unique([subCampaignId, channelId])
+}
+
+model Integration {
+  id           String   @id @default(cuid())
+  provider     String
+  accessToken  String?
+  refreshToken String?
+  customerId   String?
+  accountName  String?
+  status       String   @default("Active")
+  brandId      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  brand        Brand    @relation(fields: [brandId], references: [id])
+}
+
+model AppConfig {
+  key       String   @id
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Metric {
+  id            String       @id @default(cuid())
+  date          DateTime
+  impressions   Int          @default(0)
+  spend         Float        @default(0)
+  clicks        Int          @default(0)
+  reach         Int          @default(0)
+  engagement    Int          @default(0)
+  currency      String       @default("USD")
+  region        String?
+  country       String?
+  brandId       String
+  campaignId    String?
+  subCampaignId String?
+  channelId     String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  channel       Channel?     @relation(fields: [channelId], references: [id])
+  subCampaign   SubCampaign? @relation(fields: [subCampaignId], references: [id])
+  campaign      Campaign?    @relation(fields: [campaignId], references: [id])
+  brand         Brand        @relation(fields: [brandId], references: [id])
+
+  @@index([brandId, date])
+  @@index([campaignId, date])
+  @@index([subCampaignId, date])
+}
+
+model ShareLink {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  brandId   String
+  isActive  Boolean  @default(true)
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  brand     Brand    @relation(fields: [brandId], references: [id])
+
+  @@index([brandId])
+}
+
+model Invoice {
+  id              String   @id @default(cuid())
+  invoiceNumber   String
+  date            DateTime
+  dueDate         DateTime
+  sellerName      String
+  sellerEmail     String
+  sellerAddress   String? 
+  sellerPhone     String?
+  buyerName       String
+  buyerEmail      String
+  buyerAddress    String?
+  buyerPhone      String?
+  items           String   // Stored as JSON string
+  taxRate         Float
+  currencySymbol  String   @default("Rp")
+  paymentDetails  String   // Stored as JSON string for bank info
+  terms           String?
+  signatureImage  String?  // Base64 string or URL
+  signerName      String?
+  signatureMeta   String?  // JSON string for { position: {x,y}, title: string }
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id])
+  status          String   @default("Draft") 
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model IgExtraction {
+  id          String   @id @default(cuid())
+  shortcode   String
+  mediaId     String?
+  postType    String   // post, reel, tv, story
+  originalUrl String
+  rawInput    String
+  userId      String?
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@index([shortcode])
+  @@index([mediaId])
+  @@index([userId])
+  @@index([createdAt(sort: Desc)], map: "ig_extraction_created_at_desc")
+}
+
+model TtExtraction {
+  id          String   @id @default(cuid())
+  videoId     String?
+  shortCode   String?
+  username    String?
+  postType    String   // video, photo, embed, share, short, trending
+  originalUrl String
+  rawInput    String
+  isShortUrl  Boolean  @default(false)
+  userId      String?
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@index([videoId])
+  @@index([username])
+  @@index([userId])
+  @@index([createdAt(sort: Desc)], map: "tt_extraction_created_at_desc")
+}
