@@ -45,7 +45,7 @@ export default function PublicSharePage({ params }: { params: Promise<{ token: s
         return (
             <div className="min-h-screen flex items-center justify-center bg-[rgba(22,32,50,0.8)] p-6">
                 <Card className="max-w-md w-full p-8 text-center space-y-4">
-                    <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-red-50 text-red-500">
+                    <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-red-500/10 text-red-400">
                         <AlertCircle className="h-8 w-8" />
                     </div>
                     <h1 className="text-xl font-black text-white uppercase tracking-tight">Access Denied</h1>

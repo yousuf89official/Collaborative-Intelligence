@@ -159,7 +159,7 @@ export const CampaignsTable = ({ data, onConfigure, onDelete, onAddSubCampaign, 
                                                         <Pencil className="mr-2 h-4 w-4" /> Edit Details
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
-                                                    <DropdownMenuItem onClick={() => onDelete(parent.id)} className="text-red-600 focus:text-red-700 focus:bg-red-50">
+                                                    <DropdownMenuItem onClick={() => onDelete(parent.id)} className="text-red-400 focus:text-red-300 focus:bg-red-500/10">
                                                         <Trash2 className="mr-2 h-4 w-4" /> Delete
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>

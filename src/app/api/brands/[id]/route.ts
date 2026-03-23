@@ -62,7 +62,8 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         const params = await props.params;
         const { id } = params;
         const body = await request.json();
-        const { name, industry, industrySubTypeId, website, logo, status, brandColor } = body;
+        const { name, industry, industrySubTypeId, website, logo, status, brandColor,
+                brandFontColor, defaultCurrency, location, description } = body;
 
         // Determine if we are updating by ID or Slug
         const where = await prisma.brand.findUnique({ where: { id } })
@@ -72,14 +73,18 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         const updateData: any = {};
         if (name) {
             updateData.name = name;
-            updateData.slug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            updateData.slug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
         }
         if (industry) updateData.industryId = industry;
         if (industrySubTypeId) updateData.industrySubTypeId = industrySubTypeId;
-        if (website) updateData.website = website;
+        if (website !== undefined) updateData.website = website;
         if (logo) updateData.logo = logo;
         if (status) updateData.status = status;
         if (brandColor) updateData.brandColor = brandColor;
+        if (brandFontColor) updateData.brandFontColor = brandFontColor;
+        if (defaultCurrency) updateData.defaultCurrency = defaultCurrency;
+        if (location !== undefined) updateData.location = location;
+        if (description !== undefined) updateData.description = description;
 
         const updated = await prisma.brand.update({
             where,

@@ -56,7 +56,7 @@ export const enrichBrandData = (brand: Prisma.BrandGetPayload<{
         ...brand,
         industry: brand.industryRelation?.name || 'Unknown',
         sub_category: brand.subTypeRelation?.name || '',
-        location: 'Global', // Default as per new requirement (missing in DB)
+        location: (brand as any).location || 'Global',
         campaignCount: activeCampaigns, // Only count ACTIVE campaigns
         financials: {
             totalMediaSpend: totalMediaSpend,

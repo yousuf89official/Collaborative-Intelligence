@@ -1,193 +1,259 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Building2, Plus, Check, Copy, Globe, Palette, Users, Shield, Settings } from 'lucide-react';
-
-const WHITELABEL_CLIENTS = [
-    { id: 1, agency: 'Pinnacle Media Group', domain: 'analytics.pinnaclemedia.com', status: 'active', plan: 'Enterprise', users: 24, brands: 12, mrr: 2499, created: '2025-08-15' },
-    { id: 2, agency: 'Asia Digital Hub', domain: 'platform.asiadigitalhub.co', status: 'active', plan: 'Professional', users: 8, brands: 5, mrr: 999, created: '2025-10-01' },
-    { id: 3, agency: 'MediaFirst Agency', domain: 'dash.mediafirst.agency', status: 'pending', plan: 'Professional', users: 0, brands: 0, mrr: 799, created: '2026-02-20' },
-    { id: 4, agency: 'GlobalReach Partners', domain: 'intel.globalreach.io', status: 'active', plan: 'Enterprise', users: 32, brands: 18, mrr: 3499, created: '2025-06-01' },
-];
-
-const WHITELABEL_PLANS = [
-    {
-        name: 'Professional WL',
-        price: '$799/mo',
-        margin: '40-60%',
-        features: ['Custom domain & SSL', 'Logo & brand colors', 'Up to 10 brands', 'Up to 15 users', 'Email support', 'Basic API access', 'Standard analytics'],
-    },
-    {
-        name: 'Enterprise WL',
-        price: '$2,499/mo',
-        margin: '60-80%',
-        highlighted: true,
-        features: ['Everything in Professional', 'Unlimited brands & users', 'Full API access & webhooks', 'Custom email templates', 'SSO / SAML integration', 'Dedicated account manager', 'Priority SLA (99.9%)', 'White-label mobile app', 'Custom feature development'],
-    },
-    {
-        name: 'Custom WL',
-        price: 'Custom',
-        margin: 'Negotiable',
-        features: ['Everything in Enterprise', 'Dedicated infrastructure', 'On-premise deployment option', 'Custom SLA (99.99%)', 'Source code escrow', 'Training & onboarding', '24/7 premium support', 'Revenue share model'],
-    },
-];
-
-const REFERRAL_TIERS = [
-    { tier: 'Bronze', minReferrals: 1, maxReferrals: 5, commission: '15%', type: 'Recurring', cookie: '30 days' },
-    { tier: 'Silver', minReferrals: 6, maxReferrals: 15, commission: '20%', type: 'Recurring', cookie: '60 days' },
-    { tier: 'Gold', minReferrals: 16, maxReferrals: 50, commission: '25%', type: 'Recurring', cookie: '90 days' },
-    { tier: 'Platinum', minReferrals: 51, maxReferrals: null, commission: '30%', type: 'Recurring + Bonus', cookie: '180 days' },
-];
+import { Building2, Check, Copy, Globe, Palette, Users, Shield, Settings, Loader2, RefreshCw, Link2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { formatPrice, detectRegion } from '@/lib/region';
 
 export default function WhitelabelPage() {
-    const [activeTab, setActiveTab] = useState<'clients' | 'plans' | 'referrals' | 'setup'>('clients');
-    const [copied, setCopied] = useState(false);
+    const [activeTab, setActiveTab] = useState<'referrals' | 'plans' | 'setup'>('referrals');
+    const [loading, setLoading] = useState(true);
+    const [referral, setReferral] = useState<any>(null);
+    const [plans, setPlans] = useState<any[]>([]);
+    const [subscription, setSub] = useState<any>(null);
+    const region = detectRegion();
 
-    const totalMrr = WHITELABEL_CLIENTS.reduce((s, c) => s + c.mrr, 0);
-    const activeClients = WHITELABEL_CLIENTS.filter(c => c.status === 'active').length;
+    const fetchData = useCallback(async () => {
+        setLoading(true);
+        try {
+            const [refRes, plansRes, subRes] = await Promise.allSettled([
+                fetch('/api/referrals'),
+                fetch(`/api/plans?region=${region.region}`),
+                fetch('/api/subscriptions'),
+            ]);
+            if (refRes.status === 'fulfilled' && refRes.value.ok) setReferral(await refRes.value.json());
+            if (plansRes.status === 'fulfilled' && plansRes.value.ok) setPlans(await plansRes.value.json());
+            if (subRes.status === 'fulfilled' && subRes.value.ok) {
+                const d = await subRes.value.json();
+                setSub(d);
+            }
+        } catch {
+            toast.error('Failed to load data');
+        } finally {
+            setLoading(false);
+        }
+    }, [region.region]);
+
+    useEffect(() => { fetchData(); }, [fetchData]);
+
+    const copyLink = () => {
+        if (!referral) return;
+        navigator.clipboard.writeText(`${window.location.origin}/register/${referral.code}`);
+        toast.success('Referral link copied!');
+    };
+
+    if (loading) {
+        return <div className="flex items-center justify-center py-32"><Loader2 className="h-8 w-8 animate-spin text-[#0D9488]" /></div>;
+    }
+
+    const stats = referral?.stats;
+    const currentPlan = subscription?.plan;
+    const currency = subscription?.subscription?.currency || region.currency;
+
+    // Milestone definitions
+    const MILESTONES = [
+        { key: 'first_referral', threshold: 1, bonus: 50, boost: 0, label: 'First Referral', badge: 'Starter' },
+        { key: 'five_referrals', threshold: 5, bonus: 200, boost: 2, label: '5 Active Referrals', badge: 'Bronze' },
+        { key: 'ten_referrals', threshold: 10, bonus: 500, boost: 3, label: '10 Active Referrals', badge: 'Silver' },
+        { key: 'twenty_five', threshold: 25, bonus: 1000, boost: 5, label: '25 Active Referrals', badge: 'Gold' },
+        { key: 'fifty', threshold: 50, bonus: 2500, boost: 5, label: '50 Active Referrals', badge: 'Platinum' },
+        { key: 'hundred', threshold: 100, bonus: 5000, boost: 5, label: '100 Active Referrals', badge: 'Partner' },
+    ];
+
+    const claimedMilestones = new Set((referral?.milestones || []).map((m: any) => m.milestone));
+    const activeReferrals = stats?.activeReferrals || 0;
+
+    // Determine current tier
+    const currentTier = MILESTONES.slice().reverse().find(m => activeReferrals >= m.threshold)?.badge || 'None';
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <PageHeader
                 icon={Building2}
                 category="Growth & Revenue"
-                title="Whitelabel System"
-                description="Enable agencies to whitelabel the platform under their brand. Manage clients, pricing, and referral income."
+                title="Whitelabel & Referral Program"
+                description="Grow your revenue through referrals and white-label partnerships."
                 actions={
-                    <button className="flex items-center gap-2 px-6 py-2 bg-[#0D9488] text-white rounded-xl font-bold text-xs hover:bg-[#0F766E] transition-all shadow-lg shadow-teal-500/20">
-                        <Plus className="h-4 w-4" /> NEW WHITELABEL CLIENT
+                    <button onClick={fetchData} className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 text-white rounded-xl font-bold text-xs hover:bg-white/10 transition-all">
+                        <RefreshCw className="h-4 w-4" /> REFRESH
                     </button>
                 }
             />
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                    { label: 'Active WL Clients', value: activeClients, sub: `of ${WHITELABEL_CLIENTS.length} total` },
-                    { label: 'Total WL MRR', value: `$${totalMrr.toLocaleString()}`, sub: 'monthly recurring' },
-                    { label: 'Total WL Users', value: WHITELABEL_CLIENTS.reduce((s, c) => s + c.users, 0), sub: 'across all clients' },
-                    { label: 'Avg. Margin', value: '55%', sub: 'on whitelabel plans' },
-                ].map(card => (
-                    <div key={card.label} className="p-5 rounded-xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
-                        <p className="text-[10px] text-white/30 uppercase tracking-wider mb-1">{card.label}</p>
-                        <p className="text-2xl font-bold text-white">{card.value}</p>
-                        <p className="text-[10px] text-white/40 mt-1">{card.sub}</p>
-                    </div>
-                ))}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-5 rounded-xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Referral Tier</p>
+                    <p className="text-2xl font-bold text-[#0D9488]">{currentTier}</p>
+                    <p className="text-[10px] text-white/40 mt-1">{activeReferrals} active referrals</p>
+                </div>
+                <div className="p-5 rounded-xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Commission Rate</p>
+                    <p className="text-2xl font-bold text-white">{stats ? `${(stats.effectiveRate * 100).toFixed(0)}%` : '10%'}</p>
+                    <p className="text-[10px] text-white/40 mt-1">base {stats ? `${(stats.baseCommissionRate * 100).toFixed(0)}%` : '10%'} + {stats ? `${(stats.totalBoost * 100).toFixed(0)}%` : '0%'} boost</p>
+                </div>
+                <div className="p-5 rounded-xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Total Earned</p>
+                    <p className="text-2xl font-bold text-green-400">{formatPrice(stats?.totalEarnings || 0, currency)}</p>
+                    <p className="text-[10px] text-white/40 mt-1">{formatPrice(stats?.pendingEarnings || 0, currency)} pending</p>
+                </div>
+                <div className="p-5 rounded-xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Link Clicks</p>
+                    <p className="text-2xl font-bold text-white">{referral?.clicks || 0}</p>
+                    <p className="text-[10px] text-white/40 mt-1">{stats?.totalReferrals || 0} converted</p>
+                </div>
+            </div>
+
+            {/* Referral Link */}
+            <div className="p-5 rounded-2xl border border-[#0D9488]/20 bg-[#0D9488]/5 flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex-1">
+                    <h3 className="font-bold text-white text-sm mb-1">Your Referral Link</h3>
+                    <p className="text-xs text-white/40">Share this link to earn {stats ? `${(stats.effectiveRate * 100).toFixed(0)}%` : '10%'} recurring commission on every subscriber</p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <code className="px-3 py-2 rounded-lg bg-black/20 text-[#0D9488] text-xs font-mono">{referral?.code || '—'}</code>
+                    <button onClick={copyLink} className="px-4 py-2 bg-[#0D9488] text-white rounded-lg text-xs font-bold hover:bg-[#0F766E] transition-all flex items-center gap-1.5">
+                        <Copy className="h-3.5 w-3.5" /> Copy Link
+                    </button>
+                </div>
             </div>
 
             {/* Tabs */}
             <div className="flex gap-2 border-b border-white/10">
                 {[
-                    { id: 'clients', label: 'Clients' },
-                    { id: 'plans', label: 'Plans & Pricing' },
-                    { id: 'referrals', label: 'Referral Program' },
-                    { id: 'setup', label: 'Setup Guide' },
+                    { id: 'referrals', label: 'The Growth Network' },
+                    { id: 'plans', label: 'Plans & Quotas' },
+                    { id: 'setup', label: 'White-Label Setup' },
                 ].map(tab => (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${activeTab === tab.id ? 'border-[#0D9488] text-[#0D9488]' : 'border-transparent text-white/40'}`}>
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-[#0D9488] text-[#0D9488]' : 'border-transparent text-white/40'}`}>
                         {tab.label}
                     </button>
                 ))}
             </div>
 
-            {activeTab === 'clients' && (
-                <div className="p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
-                    <table className="w-full">
-                        <thead>
-                            <tr className="text-[10px] text-white/30 uppercase tracking-wider border-b border-white/5">
-                                <th className="text-left py-3 px-4">Agency</th>
-                                <th className="text-left py-3 px-4">Domain</th>
-                                <th className="text-left py-3 px-4">Plan</th>
-                                <th className="text-center py-3 px-4">Users</th>
-                                <th className="text-center py-3 px-4">Brands</th>
-                                <th className="text-right py-3 px-4">MRR</th>
-                                <th className="text-center py-3 px-4">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {WHITELABEL_CLIENTS.map(c => (
-                                <tr key={c.id} className="border-b border-white/5 hover:bg-white/[0.02]">
-                                    <td className="py-3 px-4">
-                                        <p className="text-sm font-medium text-white">{c.agency}</p>
-                                        <p className="text-[10px] text-white/30">Since {c.created}</p>
-                                    </td>
-                                    <td className="py-3 px-4 text-xs text-[#0D9488] font-mono">{c.domain}</td>
-                                    <td className="py-3 px-4 text-xs text-white/60">{c.plan}</td>
-                                    <td className="text-center py-3 px-4 text-xs text-white/60">{c.users}</td>
-                                    <td className="text-center py-3 px-4 text-xs text-white/60">{c.brands}</td>
-                                    <td className="text-right py-3 px-4 text-sm font-bold text-white">${c.mrr.toLocaleString()}</td>
-                                    <td className="text-center py-3 px-4">
-                                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${c.status === 'active' ? 'bg-green-500/10 text-green-400' : 'bg-yellow-500/10 text-yellow-400'}`}>{c.status}</span>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-
-            {activeTab === 'plans' && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {WHITELABEL_PLANS.map(plan => (
-                        <div key={plan.name} className={`p-8 rounded-2xl ${plan.highlighted ? 'bg-gradient-to-b from-[#0D9488]/10 to-[#4F46E5]/5 border-2 border-[#0D9488]/30' : 'border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl'}`}>
-                            {plan.highlighted && <div className="text-[10px] font-bold text-[#0D9488] uppercase tracking-wider mb-2">Most Popular</div>}
-                            <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
-                            <p className="text-3xl font-bold text-white mb-1">{plan.price}</p>
-                            <p className="text-[10px] text-white/30 mb-6">Reseller margin: {plan.margin}</p>
-                            <ul className="space-y-2.5">
-                                {plan.features.map(f => (
-                                    <li key={f} className="flex items-start gap-2 text-xs text-white/60">
-                                        <Check className="h-3.5 w-3.5 text-[#0D9488] shrink-0 mt-0.5" />
-                                        {f}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
-                </div>
-            )}
-
+            {/* The Growth Network Tab */}
             {activeTab === 'referrals' && (
                 <div className="space-y-6">
-                    <div className="p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
-                        <h3 className="font-bold text-white mb-4">Referral Commission Tiers</h3>
-                        <p className="text-xs text-white/40 mb-6">Earn recurring commissions for every customer you refer. Commission is calculated on the referred customer&apos;s monthly subscription and paid out monthly.</p>
-                        <table className="w-full">
-                            <thead>
-                                <tr className="text-[10px] text-white/30 uppercase tracking-wider border-b border-white/5">
-                                    <th className="text-left py-3 px-4">Tier</th>
-                                    <th className="text-center py-3 px-4">Referrals Required</th>
-                                    <th className="text-center py-3 px-4">Commission</th>
-                                    <th className="text-center py-3 px-4">Type</th>
-                                    <th className="text-center py-3 px-4">Cookie Window</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {REFERRAL_TIERS.map(t => (
-                                    <tr key={t.tier} className="border-b border-white/5">
-                                        <td className="py-3 px-4 text-sm font-bold text-white">{t.tier}</td>
-                                        <td className="text-center py-3 px-4 text-xs text-white/60">{t.minReferrals} - {t.maxReferrals || '∞'}</td>
-                                        <td className="text-center py-3 px-4 text-sm font-bold text-[#0D9488]">{t.commission}</td>
-                                        <td className="text-center py-3 px-4 text-xs text-white/60">{t.type}</td>
-                                        <td className="text-center py-3 px-4 text-xs text-white/60">{t.cookie}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div className="p-6 rounded-2xl border border-[#0D9488]/20 bg-[#0D9488]/5">
-                        <h3 className="font-bold text-white mb-2">Your Referral Link</h3>
-                        <div className="flex items-center gap-2">
-                            <code className="flex-1 px-4 py-2.5 bg-white/5 rounded-lg text-xs text-white/60 font-mono border border-white/10">https://collaborativeintelligence.com/?ref=YOUR_CODE</code>
-                            <button onClick={() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="px-4 py-2.5 bg-[#0D9488] text-white rounded-lg text-xs font-bold">
-                                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                            </button>
+                    {/* 3-Layer Explanation */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="p-5 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0D9488] to-[#0EA5E9] flex items-center justify-center text-white text-xs font-bold mb-3">1</div>
+                            <h4 className="font-bold text-white text-sm mb-1">Direct Commission</h4>
+                            <p className="text-xs text-white/40">Earn {stats ? `${(stats.baseCommissionRate * 100).toFixed(0)}%` : '10-30%'} recurring on every referral&apos;s subscription — forever.</p>
+                        </div>
+                        <div className="p-5 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4F46E5] to-[#0EA5E9] flex items-center justify-center text-white text-xs font-bold mb-3">2</div>
+                            <h4 className="font-bold text-white text-sm mb-1">Network Boost</h4>
+                            <p className="text-xs text-white/40">Earn 5% on your referrals&apos; referrals. When they grow, you earn more.</p>
+                        </div>
+                        <div className="p-5 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#f59e0b] to-[#ef4444] flex items-center justify-center text-white text-xs font-bold mb-3">3</div>
+                            <h4 className="font-bold text-white text-sm mb-1">Milestone Accelerators</h4>
+                            <p className="text-xs text-white/40">Hit referral milestones to unlock cash bonuses and permanent commission boosts.</p>
                         </div>
                     </div>
+
+                    {/* Milestone Progress */}
+                    <div className="p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+                        <h3 className="font-bold text-white mb-4">Milestone Accelerators</h3>
+                        <div className="space-y-3">
+                            {MILESTONES.map(m => {
+                                const claimed = claimedMilestones.has(m.key);
+                                const progress = Math.min(100, (activeReferrals / m.threshold) * 100);
+                                return (
+                                    <div key={m.key} className={`p-4 rounded-xl border ${claimed ? 'border-green-500/20 bg-green-500/5' : activeReferrals >= m.threshold ? 'border-amber-500/20 bg-amber-500/5' : 'border-white/5 bg-white/[0.03]'}`}>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-3">
+                                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${claimed ? 'bg-green-500/10 text-green-400' : 'bg-white/5 text-white/50'}`}>{m.badge}</span>
+                                                <span className={`text-xs font-bold ${claimed ? 'text-green-400' : 'text-white'}`}>{m.label}</span>
+                                            </div>
+                                            <div className="flex items-center gap-4 text-[10px] text-white/40">
+                                                <span>${m.bonus} bonus</span>
+                                                {m.boost > 0 && <span className="text-[#0D9488] font-bold">+{m.boost}% commission</span>}
+                                                {claimed && <Check className="h-4 w-4 text-green-400" />}
+                                            </div>
+                                        </div>
+                                        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                            <div className={`h-full rounded-full transition-all ${claimed ? 'bg-green-500' : 'bg-gradient-to-r from-[#0D9488] to-[#0EA5E9]'}`} style={{ width: `${claimed ? 100 : progress}%` }} />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Referral List */}
+                    {referral?.referrals?.length > 0 && (
+                        <div className="p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+                            <h3 className="font-bold text-white mb-4">Your Referrals ({referral.referrals.length})</h3>
+                            <div className="space-y-2">
+                                {referral.referrals.map((r: any) => (
+                                    <div key={r.id} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03] border border-white/5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0D9488] to-[#0EA5E9] flex items-center justify-center text-white text-xs font-bold">
+                                                {(r.user?.name || r.user?.email || '?').charAt(0).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-white">{r.user?.name || 'Unknown'}</p>
+                                                <p className="text-[10px] text-white/30">{r.user?.email}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${r.status === 'active' ? 'bg-green-500/10 text-green-400' : 'bg-amber-500/10 text-amber-400'}`}>{r.status}</span>
+                                            <span className="text-xs font-bold text-white">{formatPrice(r.totalCommission || 0, currency)}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
+            {/* Plans Tab - from database */}
+            {activeTab === 'plans' && (
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {plans.map((p: any) => {
+                        const isCurrent = p.slug === (currentPlan?.slug || 'free');
+                        const isEnterprise = p.slug === 'enterprise';
+                        return (
+                            <div key={p.id} className={`p-5 rounded-2xl border backdrop-blur-xl ${isCurrent ? 'border-[#0D9488]/30 bg-[#0D9488]/5' : 'border-white/[0.06] bg-[rgba(22,32,50,0.5)]'}`}>
+                                {isCurrent && <span className="text-[10px] font-bold text-[#0D9488] uppercase">Current</span>}
+                                <h3 className="text-lg font-bold text-white">{p.name}</h3>
+                                <div className="my-3">
+                                    {p.pricing ? (
+                                        <span className="text-2xl font-bold text-white">{formatPrice(p.pricing.monthly, p.pricing.currency)}<span className="text-xs text-white/40">/mo</span></span>
+                                    ) : p.slug === 'free' ? (
+                                        <span className="text-2xl font-bold text-white">Free</span>
+                                    ) : (
+                                        <span className="text-2xl font-bold text-white">Custom</span>
+                                    )}
+                                </div>
+                                <div className="space-y-1.5">
+                                    {[
+                                        { k: 'brands', l: 'Brands' },
+                                        { k: 'users', l: 'Users' },
+                                        { k: 'whitelabelDomains', l: 'WL Domains' },
+                                        { k: 'integrations', l: 'Integrations' },
+                                    ].map(q => (
+                                        <div key={q.k} className="flex justify-between text-xs">
+                                            <span className="text-white/40">{q.l}</span>
+                                            <span className="font-bold text-white">{p.quotas[q.k] === -1 ? '∞' : p.quotas[q.k]}</span>
+                                        </div>
+                                    ))}
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-white/40">Commission</span>
+                                        <span className="font-bold text-[#0D9488]">{((p.quotas.referralCommission || 0.10) * 100).toFixed(0)}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* Setup Guide Tab */}
             {activeTab === 'setup' && (
                 <div className="space-y-6 max-w-3xl">
                     {[

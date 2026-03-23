@@ -21,8 +21,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: session.user.id as string,
         name: session.user.name as string,
         email: session.user.email as string,
-        role: (session.user as any).role || 'user', // Ensure role is passed in session
-        avatar: (session.user as any).image // mapping image to avatar if needed
+        role: (session.user as any).role || 'user',
+        status: 'Active',
+        permissions: (session.user as any).permissions || null,
+        avatar: (session.user as any).image,
     } as User : null;
 
     const isLoading = status === 'loading';

@@ -49,7 +49,7 @@ const PROVIDERS: ProviderConfig[] = [
         key: 'tiktok_ads',
         name: 'TikTok Ads',
         icon: <span className="font-bold text-lg">T</span>,
-        color: 'text-black',
+        color: 'text-white',
         description: 'Connect TikTok For Business Accounts'
     },
     {
@@ -273,7 +273,7 @@ export const IntegrationsCard = ({ brandId }: IntegrationsCardProps) => {
                                         {/* Google Ads Pending State */}
                                         {provider.key === 'google_ads' && hasPending && !selectingAccount && (
                                             <div className="mt-2 flex items-center gap-2">
-                                                <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Action Required</Badge>
+                                                <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20">Action Required</Badge>
                                                 <Button size="sm" variant="link" className="text-blue-600 h-auto p-0" onClick={fetchGoogleAccounts}>
                                                     Select Ad Account
                                                 </Button>

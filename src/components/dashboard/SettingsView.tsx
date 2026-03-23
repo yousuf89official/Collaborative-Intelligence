@@ -26,7 +26,7 @@ import { toast } from 'sonner';
 
 const SettingsView = () => {
     const { data: session } = useSession();
-    const [activeTab, setActiveTab] = useState('white_label');
+    const [activeTab, setActiveTab] = useState('general_profile');
     const [activeColor, setActiveColor] = useState('indigo');
     const [users, setUsers] = useState<any[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
@@ -100,7 +100,7 @@ const SettingsView = () => {
                             type="text"
                             value={profileData.name}
                             onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                            className="block w-full px-4 py-3 rounded-xl border border-white/10 text-sm font-semibold text-white/70 focus:ring-2 focus:ring-[#0D9488] focus:border-transparent transition-all shadow-sm"
+                            className="block w-full px-4 py-3 rounded-xl border border-white/10 bg-white/[0.04] text-sm font-semibold text-white placeholder:text-white/30 focus:ring-2 focus:ring-[#0D9488] focus:border-transparent transition-all shadow-sm hover:bg-white/[0.06]"
                             placeholder="Your Name"
                         />
                     </div>
@@ -115,7 +115,7 @@ const SettingsView = () => {
                     </div>
                     <div className="space-y-2">
                         <label className="block text-xs font-black uppercase tracking-widest text-white/50">Account Role</label>
-                        <div className="px-4 py-3 rounded-xl border border-white/10 text-sm font-bold text-[#0D9488] bg-[#0D9488]/10/50 shadow-sm inline-block">
+                        <div className="px-4 py-3 rounded-xl border border-white/10 text-sm font-bold text-[#0D9488] bg-[#0D9488]/10 shadow-sm inline-block">
                             {profileData.role}
                         </div>
                     </div>
@@ -185,7 +185,7 @@ const SettingsView = () => {
                             </span>
                             <input
                                 type="text"
-                                className="flex-1 min-w-0 block w-full px-4 py-3 text-sm font-semibold text-white/70 bg-white/[0.04] placeholder:text-white/30 focus:outline-none"
+                                className="flex-1 min-w-0 block w-full px-4 py-3 text-sm font-semibold text-white bg-white/[0.04] placeholder:text-white/30 focus:outline-none hover:bg-white/[0.06]"
                                 placeholder="app.youragency.com"
                             />
                         </div>
@@ -198,7 +198,7 @@ const SettingsView = () => {
                             </div>
                             <input
                                 type="text"
-                                className="block w-full pl-11 pr-4 py-3 rounded-xl border border-white/10 text-sm font-semibold text-white/70 placeholder:text-white/30 focus:ring-2 focus:ring-[#0D9488] focus:border-transparent transition-all shadow-sm"
+                                className="block w-full pl-11 pr-4 py-3 rounded-xl border border-white/10 bg-white/[0.04] text-sm font-semibold text-white placeholder:text-white/30 focus:ring-2 focus:ring-[#0D9488] focus:border-transparent transition-all shadow-sm hover:bg-white/[0.06]"
                                 placeholder="Agency Reports"
                             />
                         </div>

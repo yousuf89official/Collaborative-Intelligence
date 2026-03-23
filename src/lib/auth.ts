@@ -5,6 +5,13 @@ import { prisma } from "@/lib/prisma";
 import { createHash } from "crypto";
 import bcrypt from "bcryptjs";
 
+// Fire-and-forget activity log (no await needed in authorize)
+function logAuth(userName: string, email: string, action: string, detail: string, severity: string = 'info') {
+    prisma.activityLog.create({
+        data: { userName, userEmail: email, action, target: 'Authentication', detail, severity }
+    }).catch(() => {});
+}
+
 // Dummy hash to compare against when user doesn't exist (prevents timing attacks)
 const DUMMY_HASH = "$2b$12$LJ3m4ys3Lg7RHSfLWxKnaeGBa4eL8XmEBK.LCiEEWO.WRa/B2PpKG";
 
@@ -20,7 +27,7 @@ export const authOptions: NextAuthOptions = {
                 if (!credentials?.email || !credentials?.password) return null;
 
                 const user = await prisma.user.findUnique({
-                    where: { email: credentials.email }
+                    where: { email: credentials.email.toLowerCase().trim() }
                 });
 
                 // Always run bcrypt compare to prevent timing-based user enumeration
@@ -46,13 +53,28 @@ export const authOptions: NextAuthOptions = {
                     }
                 }
 
-                if (!isValid) return null;
+                if (!isValid) {
+                    logAuth(user.name || 'Unknown', credentials.email, 'login_failed', 'Invalid password attempt', 'warning');
+                    return null;
+                }
+
+                // Block login for non-Active users
+                if (user.status !== 'Active') {
+                    throw new Error(
+                        user.status === 'Pending' ? 'Your account is pending admin approval'
+                        : user.status === 'Suspended' ? 'Your account has been suspended'
+                        : 'Your account is inactive'
+                    );
+                }
+
+                logAuth(user.name || 'Unknown', user.email, 'login', `Successful login (${user.role})`);
 
                 return {
                     id: user.id,
                     name: user.name,
                     email: user.email,
-                    role: user.role
+                    role: user.role,
+                    permissions: user.permissions,
                 };
             }
         })
@@ -69,6 +91,7 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.role = user.role;
                 token.id = user.id;
+                token.permissions = (user as any).permissions;
             }
             return token;
         },
@@ -76,6 +99,7 @@ export const authOptions: NextAuthOptions = {
             if (session.user) {
                 session.user.role = token.role;
                 session.user.id = token.id as string;
+                (session.user as any).permissions = token.permissions;
             }
             return session;
         }

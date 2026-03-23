@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, FileText, Search, Edit2, Trash2 } from 'lucide-react';
+import { Plus, FileText, Search, Edit2, Trash2, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -80,6 +80,24 @@ export default function InvoicePage() {
             } catch (error) {
                 toast.error("Failed to delete invoice");
             }
+        }
+    };
+
+    const handleDuplicate = async (e: React.MouseEvent, inv: any) => {
+        e.stopPropagation();
+        try {
+            const duplicate = {
+                ...inv,
+                id: undefined, // Remove id so it creates a new record
+                invoiceNumber: `${inv.invoiceNumber}-COPY`,
+                date: new Date().toISOString().slice(0, 10),
+                dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+            };
+            await saveInvoice(duplicate);
+            fetchInvoices();
+            toast.success('Invoice duplicated');
+        } catch {
+            toast.error('Failed to duplicate invoice');
         }
     };
 
@@ -172,10 +190,13 @@ export default function InvoicePage() {
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-blue-600" onClick={(e) => { e.stopPropagation(); handleEdit(inv); }}>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-green-600" onClick={(e) => handleDuplicate(e, inv)} title="Duplicate">
+                                                        <Copy size={14} />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-blue-600" onClick={(e) => { e.stopPropagation(); handleEdit(inv); }} title="Edit">
                                                         <Edit2 size={14} />
                                                     </Button>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-600" onClick={(e) => handleDelete(e, inv.id)}>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-600" onClick={(e) => handleDelete(e, inv.id)} title="Delete">
                                                         <Trash2 size={14} />
                                                     </Button>
                                                 </div>

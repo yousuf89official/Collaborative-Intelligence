@@ -28,7 +28,12 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError('Invalid credentials');
+        // NextAuth passes thrown Error messages as result.error
+        const msg = result.error;
+        if (msg.includes('pending')) setError('Your account is pending admin approval');
+        else if (msg.includes('suspended')) setError('Your account has been suspended');
+        else if (msg.includes('inactive')) setError('Your account is inactive');
+        else setError('Invalid email or password');
       } else {
         router.push('/dashboard');
       }

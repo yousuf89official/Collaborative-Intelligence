@@ -51,8 +51,11 @@ const FinancialCard = ({ label, value, trend, icon: Icon, color }: { label: stri
             </div>
         </div>
         <div className="mt-3 flex items-center gap-1.5 pt-3 border-t border-white/[0.04]">
-            <span className="text-[10px] font-black text-emerald-400 flex items-center gap-0.5"><TrendingUp className="h-2.5 w-2.5" /> +{trend}%</span>
-            <span className="text-[10px] font-bold text-white/30">vs last month</span>
+            <span className={`text-[10px] font-black flex items-center gap-0.5 ${trend >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                <TrendingUp className={`h-2.5 w-2.5 ${trend < 0 ? 'rotate-180' : ''}`} />
+                {trend >= 0 ? '+' : ''}{trend}%
+            </span>
+            <span className="text-[10px] font-bold text-white/30">vs prior period</span>
         </div>
     </Card>
 );
@@ -76,23 +79,44 @@ export const DashboardAnalyticsView = ({
     const brandMetrics = metrics.filter((m: Metric) => brandCampaigns.some((c: Campaign) => c.id === m.campaign_id));
 
     const stats = useMemo(() => {
-        const totalSpend = brandMetrics.reduce((sum: number, m: Metric) => sum + m.spend, 0);
-        const totalImpressions = brandMetrics.reduce((sum: number, m: Metric) => sum + m.impressions, 0);
-        const totalClicks = brandMetrics.reduce((sum: number, m: Metric) => sum + m.clicks, 0);
+        const totalSpend = brandMetrics.reduce((sum: number, m: any) => sum + (m.spend || 0), 0);
+        const totalImpressions = brandMetrics.reduce((sum: number, m: any) => sum + (m.impressions || 0), 0);
+        const totalClicks = brandMetrics.reduce((sum: number, m: any) => sum + (m.clicks || 0), 0);
         const avgCtr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
 
-        return { totalSpend, totalImpressions, totalClicks, avgCtr };
+        // Compute real trends: compare first half vs second half of metrics
+        const mid = Math.floor(brandMetrics.length / 2);
+        const first = brandMetrics.slice(0, mid);
+        const second = brandMetrics.slice(mid);
+        const pct = (a: number, b: number) => b > 0 ? Math.round(((a - b) / b) * 1000) / 10 : 0;
+
+        const firstSpend = first.reduce((s: number, m: any) => s + (m.spend || 0), 0);
+        const secondSpend = second.reduce((s: number, m: any) => s + (m.spend || 0), 0);
+        const firstImp = first.reduce((s: number, m: any) => s + (m.impressions || 0), 0);
+        const secondImp = second.reduce((s: number, m: any) => s + (m.impressions || 0), 0);
+        const firstClicks = first.reduce((s: number, m: any) => s + (m.clicks || 0), 0);
+        const secondClicks = second.reduce((s: number, m: any) => s + (m.clicks || 0), 0);
+        const firstCtr = firstImp > 0 ? (firstClicks / firstImp) * 100 : 0;
+        const secondCtr = secondImp > 0 ? (secondClicks / secondImp) * 100 : 0;
+
+        return {
+            totalSpend, totalImpressions, totalClicks, avgCtr,
+            trendSpend: pct(secondSpend, firstSpend),
+            trendImpressions: pct(secondImp, firstImp),
+            trendClicks: pct(secondClicks, firstClicks),
+            trendCtr: pct(secondCtr, firstCtr),
+        };
     }, [brandMetrics]);
 
     // Aggregate by date
     const chartData = useMemo(() => {
         const dailyMap: Record<string, { date: string, impressions: number, clicks: number, spend: number }> = {};
-        brandMetrics.forEach((m: Metric) => {
+        brandMetrics.forEach((m: any) => {
             const date = m.date;
             if (!dailyMap[date]) dailyMap[date] = { date, impressions: 0, clicks: 0, spend: 0 };
-            dailyMap[date].impressions += m.impressions;
-            dailyMap[date].clicks += m.clicks;
-            dailyMap[date].spend += m.spend;
+            dailyMap[date].impressions += m.impressions || 0;
+            dailyMap[date].clicks += m.clicks || 0;
+            dailyMap[date].spend += m.spend || 0;
         });
         return Object.values(dailyMap).sort((a: any, b: any) => a.date.localeCompare(b.date)).slice(-30);
     }, [brandMetrics]);
@@ -103,29 +127,29 @@ export const DashboardAnalyticsView = ({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <FinancialCard
                     label="Total Inventory Spend"
-                    value={`$${stats.totalSpend.toLocaleString()}`}
-                    trend={8.2}
+                    value={stats.totalSpend > 1e6 ? `$${(stats.totalSpend / 1e6).toFixed(1)}M` : `$${stats.totalSpend.toLocaleString()}`}
+                    trend={stats.trendSpend}
                     icon={DollarSign}
                     color="var(--brand-primary)"
                 />
                 <FinancialCard
                     label="Global Reach"
-                    value={(stats.totalImpressions / 1e6).toFixed(1) + 'M'}
-                    trend={14.5}
+                    value={stats.totalImpressions > 1e6 ? (stats.totalImpressions / 1e6).toFixed(1) + 'M' : stats.totalImpressions > 1e3 ? (stats.totalImpressions / 1e3).toFixed(1) + 'K' : String(stats.totalImpressions)}
+                    trend={stats.trendImpressions}
                     icon={Globe}
                     color="var(--brand-primary)"
                 />
                 <FinancialCard
                     label="Consumer Engagement"
-                    value={(stats.totalClicks / 1e3).toFixed(1) + 'K'}
-                    trend={2.4}
+                    value={stats.totalClicks > 1e6 ? (stats.totalClicks / 1e6).toFixed(1) + 'M' : stats.totalClicks > 1e3 ? (stats.totalClicks / 1e3).toFixed(1) + 'K' : String(stats.totalClicks)}
+                    trend={stats.trendClicks}
                     icon={Activity}
                     color="var(--brand-primary)"
                 />
                 <FinancialCard
                     label="Conversion Yield"
                     value={stats.avgCtr.toFixed(2) + '%'}
-                    trend={-1.2}
+                    trend={stats.trendCtr}
                     icon={TrendingUp}
                     color="var(--brand-primary)"
                 />

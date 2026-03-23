@@ -8,18 +8,28 @@ datasource db {
 }
 
 model User {
-  id        String      @id @default(cuid())
-  email     String      @unique
-  password  String
-  name      String?
-  role      String      @default("user")
-  status    String      @default("Active")
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  invoices  Invoice[]
-  brands    UserBrand[]
+  id          String      @id @default(cuid())
+  email       String      @unique
+  password    String
+  name        String?
+  role        String      @default("viewer")
+  workRole    String?     // "Role at Work" e.g. Marketing Manager, Analyst
+  status      String      @default("Active")
+  permissions String?     // JSON array of allowed feature keys e.g. ["dashboard","brands","reports"]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  invoices      Invoice[]
+  brands        UserBrand[]
   igExtractions IgExtraction[]
   ttExtractions TtExtraction[]
+  subscriptions    Subscription[]
+  referralCode     ReferralCode?
+  referredBy       Referral?          @relation("ReferredBy")
+  commissions      Commission[]
+  milestones       MilestoneReward[]
+  whitelabelDomains WhitelabelDomain[]
+  scheduledReports  ScheduledReport[]
+  apiKeys           ApiKey[]
 }
 
 model UserBrand {
@@ -45,6 +55,7 @@ model Brand {
   logo              String?
   status            String           @default("Active")
   defaultCurrency   String           @default("USD")
+  location          String?
   brandColor        String?
   brandFontColor    String           @default("#000000")
   description       String?
@@ -61,6 +72,8 @@ model Brand {
   metrics           Metric[]
   shareLinks        ShareLink[]
   users             UserBrand[]
+  scheduledReports  ScheduledReport[]
+  creatives         Creative[]
 }
 
 model Industry {
@@ -176,6 +189,252 @@ model Integration {
   updatedAt    DateTime @updatedAt
   brand        Brand    @relation(fields: [brandId], references: [id])
 }
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  userName  String
+  userEmail String
+  action    String   // login, login_failed, create, update, delete, export, view, sync
+  target    String   // Authentication, Campaign, Brand, Reports, Settings, etc.
+  detail    String
+  severity  String   @default("info") // info, warning, critical
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@index([userId])
+  @@index([severity])
+}
+
+model InviteToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  email     String?
+  role      String    @default("viewer")
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdBy String
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+}
+
+// ─── CREATIVE ASSETS ─────────────────────────────────────────────────
+
+model Creative {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   @default("image") // image, video, document
+  url         String                     // Base64 data URL or external URL
+  thumbnail   String?                    // Thumbnail for video/documents
+  fileSize    Int?                       // Size in bytes
+  mimeType    String?
+  brandId     String
+  campaignId  String?
+  channelId   String?
+  status      String   @default("active") // active, archived
+  tags        String?                    // JSON array of tags
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  brand       Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@index([brandId])
+  @@index([campaignId])
+}
+
+// ─── PUBLIC API KEYS ─────────────────────────────────────────────────
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String                   // "Production API Key"
+  prefix      String                   // "ci_prod_" (visible part)
+  hashedKey   String    @unique        // SHA256 hash of the full key
+  userId      String
+  scopes      String                   // JSON array: ["read:campaigns","read:metrics"]
+  rateLimit   Int       @default(1000) // Requests per minute
+  status      String    @default("active") // active, inactive, revoked
+  lastUsedAt  DateTime?
+  requestCount Int      @default(0)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([hashedKey])
+  @@index([userId])
+}
+
+// ─── WHITE-LABEL & CLIENT PORTAL ─────────────────────────────────────
+
+model WhitelabelDomain {
+  id            String   @id @default(cuid())
+  domain        String   @unique       // e.g. "analytics.pinnaclemedia.com"
+  userId        String                  // Owner (agency admin)
+  brandName     String                  // Display name for the portal
+  logo          String?                 // Custom logo URL
+  primaryColor  String   @default("#0D9488")
+  accentColor   String   @default("#0EA5E9")
+  favicon       String?
+  customCss     String?                 // Optional CSS overrides
+  loginMessage  String?                 // Custom login page message
+  isActive      Boolean  @default(true)
+  sslStatus     String   @default("pending") // pending, active, error
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([domain])
+}
+
+model ScheduledReport {
+  id          String    @id @default(cuid())
+  brandId     String
+  userId      String                   // Who created the schedule
+  recipientEmails String              // JSON array of email addresses
+  frequency   String   @default("weekly") // daily, weekly, monthly
+  dayOfWeek   Int      @default(1)    // 0=Sun, 1=Mon, ..., 6=Sat (for weekly)
+  dayOfMonth  Int      @default(1)    // 1-28 (for monthly)
+  hour        Int      @default(8)    // UTC hour to send (0-23)
+  periodDays  Int      @default(7)    // How many days of data to include
+  includeScores    Boolean @default(true)
+  includeAnomalies Boolean @default(true)
+  includeBenchmarks Boolean @default(true)
+  isActive    Boolean  @default(true)
+  lastSentAt  DateTime?
+  nextSendAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  brand       Brand    @relation(fields: [brandId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([brandId])
+  @@index([nextSendAt])
+  @@index([isActive])
+}
+
+// ─── REVENUE FOUNDATION ──────────────────────────────────────────────
+
+model Plan {
+  id            String         @id @default(cuid())
+  slug          String         @unique // free, starter, growth, agency, enterprise
+  name          String                 // Free, Starter, Growth, Agency, Enterprise
+  description   String?
+  quotas        String                 // JSON: { brands, campaigns, users, retention, reports, apiCalls, aiQueries, integrations, whitelabelDomains, storageMb }
+  isActive      Boolean        @default(true)
+  sortOrder     Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  prices        PlanPrice[]
+  subscriptions Subscription[]
+}
+
+model PlanPrice {
+  id        String   @id @default(cuid())
+  planId    String
+  region    String   // sea_id, sea_my, sea_sg, sea_th, sea_ph, south_asia_in, gcc_ae, gcc_sa, global_us, global_uk, global_au, global_eu
+  currency  String   // IDR, MYR, SGD, THB, PHP, INR, AED, SAR, USD, GBP, AUD, EUR
+  monthly   Int      // Price in smallest unit (cents/sen/paisa) for monthly billing
+  yearly    Int      // Price in smallest unit for yearly billing (per month equivalent)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  plan      Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, region])
+  @@index([region])
+}
+
+model Subscription {
+  id              String    @id @default(cuid())
+  userId          String
+  planId          String
+  status          String    @default("active") // active, trialing, past_due, canceled, expired
+  billingCycle    String    @default("monthly") // monthly, yearly
+  region          String    @default("global_us")
+  currency        String    @default("USD")
+  amountPaid      Int       @default(0)        // Last payment amount in smallest unit
+  trialEndsAt     DateTime?
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  canceledAt      DateTime?
+  paymentProvider String?   // paddle, paypal, manual
+  paymentId       String?   // External payment provider subscription ID
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan            Plan      @relation(fields: [planId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([paymentId])
+}
+
+model ReferralCode {
+  id        String     @id @default(cuid())
+  code      String     @unique    // e.g. "YOUSUF-CI" or auto-generated
+  userId    String     @unique    // One code per user
+  clicks    Int        @default(0)
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referrals Referral[]
+}
+
+model Referral {
+  id              String      @id @default(cuid())
+  referralCodeId  String
+  referredUserId  String      @unique // The user who signed up via referral
+  status          String      @default("pending") // pending, active, churned
+  convertedAt     DateTime?   // When the referred user became a paying subscriber
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  referralCode    ReferralCode @relation(fields: [referralCodeId], references: [id])
+  referredUser    User         @relation("ReferredBy", fields: [referredUserId], references: [id])
+  commissions     Commission[]
+
+  @@index([referralCodeId])
+  @@index([status])
+}
+
+model Commission {
+  id          String   @id @default(cuid())
+  referralId  String
+  userId      String   // The user who EARNS this commission
+  amount      Int      // Amount in smallest currency unit
+  currency    String   @default("USD")
+  rate        Float    // The commission rate applied (e.g. 0.20 = 20%)
+  layer       Int      @default(1) // 1 = direct referral, 2 = network boost
+  status      String   @default("pending") // pending, approved, paid, rejected
+  periodStart DateTime
+  periodEnd   DateTime
+  paidAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  referral    Referral @relation(fields: [referralId], references: [id])
+  earner      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([periodStart, periodEnd])
+}
+
+model MilestoneReward {
+  id          String    @id @default(cuid())
+  userId      String
+  milestone   String    // first_referral, five_referrals, ten_referrals, twenty_five, fifty, hundred
+  bonusAmount Int       @default(0) // Bonus credit in smallest currency unit
+  boostPct    Float     @default(0) // Permanent commission boost (e.g. 0.02 = +2%)
+  claimedAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, milestone])
+  @@index([userId])
+}
+
+// ─── END REVENUE FOUNDATION ──────────────────────────────────────────
 
 model AppConfig {
   key       String   @id

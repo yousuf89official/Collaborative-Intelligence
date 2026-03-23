@@ -10,44 +10,71 @@ export async function GET(request: Request) {
         const brandId = searchParams.get('brandId');
         const campaignId = searchParams.get('campaignId');
 
-        // if (!brandId && !campaignId) {
-        //     return NextResponse.json({ error: 'brandId or campaignId required' }, { status: 400 });
-        // }
+        const where: any = {};
+        if (brandId) where.brandId = brandId;
+        if (campaignId) where.campaignId = campaignId;
 
         const metrics = await prisma.metric.findMany({
-            where: {
-                ...(brandId && { brandId }),
-                ...(campaignId && { campaignId })
-            },
-            orderBy: { date: 'asc' }
+            where,
+            orderBy: { date: 'asc' },
         });
 
         const chartData = metrics.map((m: any) => ({
             date: m.date.toISOString().split('T')[0],
-            value: m.engagement, // Mapping for Engagement Trend Widget
+            value: m.engagement,
             impressions: m.impressions,
             spend: m.spend,
             clicks: m.clicks,
             reach: m.reach,
             engagement: m.engagement,
-            campaignId: m.campaignId
+            campaignId: m.campaignId,
         }));
 
-        // Mock Demographics (since we don't have a model for this yet, but we want to move logic to backend)
-        const demographics = [
-            { name: '18-24', value: 35 },
-            { name: '25-34', value: 45 },
-            { name: '35-44', value: 15 },
-            { name: '45+', value: 5 },
-        ];
+        // Compute demographics from actual metric data if available,
+        // otherwise return empty array (no mock data)
+        let demographics: { name: string; value: number }[] = [];
+
+        // Try to load demographics from AppConfig (can be set by admin or integration sync)
+        try {
+            const demoConfig = await prisma.appConfig.findUnique({ where: { key: `demographics:${brandId || 'global'}` } });
+            if (demoConfig) {
+                demographics = JSON.parse(demoConfig.value);
+            }
+        } catch {}
+
+        // Compute summary aggregates
+        const totals = metrics.reduce(
+            (acc: any, m: any) => ({
+                impressions: acc.impressions + m.impressions,
+                clicks: acc.clicks + m.clicks,
+                spend: acc.spend + m.spend,
+                reach: acc.reach + m.reach,
+                engagement: acc.engagement + m.engagement,
+            }),
+            { impressions: 0, clicks: 0, spend: 0, reach: 0, engagement: 0 }
+        );
+
+        const ctr = totals.impressions > 0 ? ((totals.clicks / totals.impressions) * 100).toFixed(2) : '0.00';
+        const cpc = totals.clicks > 0 ? (totals.spend / totals.clicks).toFixed(2) : '0.00';
+        const cpm = totals.impressions > 0 ? ((totals.spend / totals.impressions) * 1000).toFixed(2) : '0.00';
 
         return NextResponse.json({
             trend: chartData,
-            demographics
+            demographics,
+            summary: {
+                totalImpressions: totals.impressions,
+                totalClicks: totals.clicks,
+                totalSpend: totals.spend,
+                totalReach: totals.reach,
+                totalEngagement: totals.engagement,
+                ctr,
+                cpc,
+                cpm,
+                dataPoints: metrics.length,
+            },
         });
-
-    } catch (error) {
-        console.error('Analytics Error:', error);
+    } catch (err) {
+        console.error('Analytics Error:', err);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

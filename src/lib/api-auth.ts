@@ -19,7 +19,8 @@ export async function requireAuth() {
 export async function requireAdmin() {
     const { error, session } = await requireAuth();
     if (error) return { error, session: null };
-    if (session!.user.role !== "admin") {
+    const adminRoles = ["admin", "super_admin", "masteradmin"];
+    if (!adminRoles.includes(session!.user.role.toLowerCase())) {
         return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }), session: null };
     }
     return { error: null, session };

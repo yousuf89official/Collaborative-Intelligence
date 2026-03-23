@@ -12,9 +12,9 @@ const fadeInUp = {
 };
 
 const CONTACT_OPTIONS = [
-    { icon: 'mail', title: 'Email Us', desc: 'hello@collaborativeintelligence.com', sub: 'Typically reply within 24 hours' },
-    { icon: 'call', title: 'Call Us', desc: '+1 (555) 123-4567', sub: 'Mon-Fri, 9am-6pm EST' },
-    { icon: 'location_on', title: 'Visit Us', desc: 'Jakarta, Indonesia', sub: 'Schedule an office visit' },
+    { icon: 'mail', title: 'Email Us', desc: 'hello@collaborativeintelligence.com', sub: 'Typically reply within 24 hours', href: 'mailto:hello@collaborativeintelligence.com' },
+    { icon: 'call', title: 'Call Us', desc: '+1 (555) 123-4567', sub: 'Mon-Fri, 9am-6pm EST', href: 'tel:+15551234567' },
+    { icon: 'location_on', title: 'Visit Us', desc: 'Jakarta, Indonesia', sub: 'Schedule an office visit', href: undefined },
 ];
 
 export function ContactPage() {
@@ -58,7 +58,7 @@ export function ContactPage() {
             </section>
 
             {/* Contact Options */}
-            <section className="py-12">
+            <section className="py-12" aria-label="Contact methods">
                 <div className="max-w-5xl mx-auto px-6">
                     <div className="grid md:grid-cols-3 gap-6">
                         {CONTACT_OPTIONS.map((opt, idx) => (
@@ -70,10 +70,16 @@ export function ContactPage() {
                                 className="p-6 rounded-xl glass-card glass-card-hover text-center"
                             >
                                 <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-[#0D9488]/10 text-[#0D9488] flex items-center justify-center">
-                                    <span className="material-symbols-outlined text-xl">{opt.icon}</span>
+                                    <span className="material-symbols-outlined text-xl" aria-hidden="true">{opt.icon}</span>
                                 </div>
                                 <h3 className="font-bold text-white mb-1">{opt.title}</h3>
-                                <p className="text-sm text-white/60 mb-1">{opt.desc}</p>
+                                <p className="text-sm text-white/60 mb-1">
+                                    {opt.href ? (
+                                        <a href={opt.href} className="hover:text-[#0D9488] transition-colors" title={`${opt.title} - ${opt.desc}`}>{opt.desc}</a>
+                                    ) : (
+                                        opt.desc
+                                    )}
+                                </p>
                                 <p className="text-xs text-white/30">{opt.sub}</p>
                             </motion.div>
                         ))}
@@ -82,7 +88,7 @@ export function ContactPage() {
             </section>
 
             {/* Form */}
-            <section className="py-24 bg-[#0d0d12] border-y border-white/5">
+            <section className="py-24 bg-[#0d0d12] border-y border-white/5" aria-labelledby="contact-form-heading">
                 <div className="max-w-3xl mx-auto px-6">
                     <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
                         {submitted ? (
@@ -96,7 +102,7 @@ export function ContactPage() {
                         ) : (
                             <form onSubmit={handleSubmit} className="p-8 md:p-12 rounded-2xl glass-card space-y-6">
                                 <div className="text-center mb-8">
-                                    <h2 className="text-3xl font-bold text-white mb-2">Send Us a Message</h2>
+                                    <h2 id="contact-form-heading" className="text-3xl font-bold text-white mb-2">Send Us a Message</h2>
                                     <p className="text-white/40 text-sm">Fill out the form below and our team will get back to you shortly.</p>
                                 </div>
 

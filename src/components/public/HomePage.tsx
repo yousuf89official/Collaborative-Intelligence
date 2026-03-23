@@ -172,9 +172,9 @@ export function HomePage() {
     }, []);
 
     return (
-        <div className="public-site min-h-screen overflow-x-hidden">
+        <div className="public-site min-h-screen overflow-x-hidden" role="main">
             {/* ── Navigation ─────────────────────────────────────────── */}
-            <nav className="fixed top-0 w-full z-50 glass-nav-dark">
+            <nav className="fixed top-0 w-full z-50 glass-nav-dark" aria-label="Main navigation">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-3 group">
                         <div className="relative w-9 h-9 bg-gradient-to-br from-[#0D9488] to-[#6929C4] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -245,7 +245,7 @@ export function HomePage() {
                     >
                         {content.heroTitle}
                         <br />
-                        <span className="gradient-text">{content.heroHighlight}</span>
+                        <span className="gradient-text" aria-label="for Data-Driven Brands">{content.heroHighlight}</span>
                     </motion.h1>
 
                     <motion.p
@@ -263,11 +263,11 @@ export function HomePage() {
                         transition={{ duration: 0.7, delay: 0.8 }}
                         className="flex flex-col sm:flex-row items-center justify-center gap-4"
                     >
-                        <Link href="/contact" className="group w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-[#0D9488] to-[#0D9488]/90 text-white font-bold rounded-xl shadow-xl shadow-[#0D9488]/25 hover:shadow-[#0D9488]/40 transition-all flex items-center justify-center gap-2">
+                        <Link href="/contact" className="group w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-[#0D9488] to-[#0D9488]/90 text-white font-bold rounded-xl shadow-xl shadow-[#0D9488]/25 hover:shadow-[#0D9488]/40 transition-all flex items-center justify-center gap-2" title="Book a demo of Collaborative Intelligence campaign analytics platform">
                             Book a Demo
-                            <span className="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                            <span className="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform" aria-hidden="true">arrow_forward</span>
                         </Link>
-                        <Link href="/auth" className="w-full sm:w-auto px-8 py-4 border border-white/10 bg-white/5 text-white font-bold rounded-xl hover:bg-white/10 hover:border-white/20 transition-all backdrop-blur-sm">
+                        <Link href="/auth" className="w-full sm:w-auto px-8 py-4 border border-white/10 bg-white/5 text-white font-bold rounded-xl hover:bg-white/10 hover:border-white/20 transition-all backdrop-blur-sm" title="Log in to your Collaborative Intelligence dashboard">
                             Login to Dashboard
                         </Link>
                     </motion.div>
@@ -422,7 +422,7 @@ export function HomePage() {
                             Everything You Need to <span className="gradient-text">Win in Media</span>
                         </h2>
                         <p className="text-white/40 text-lg max-w-2xl mx-auto">
-                            A comprehensive suite of tools designed for enterprise media teams who demand precision, speed, and collaboration.
+                            Collaborative Intelligence provides a comprehensive suite of campaign analytics tools designed for enterprise media teams who demand precision, speed, and collaboration.
                         </p>
                     </motion.div>
 
@@ -728,7 +728,7 @@ export function HomePage() {
             </Section>
 
             {/* ── Footer ─────────────────────────────────────────────── */}
-            <footer className="border-t border-white/5 bg-[#080810] pt-20 pb-8">
+            <footer className="border-t border-white/5 bg-[#080810] pt-20 pb-8" role="contentinfo">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
                         {/* Brand */}

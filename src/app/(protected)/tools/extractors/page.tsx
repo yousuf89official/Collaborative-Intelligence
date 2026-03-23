@@ -181,7 +181,7 @@ function IgExtractorTab() {
                         ref={inputRef}
                         id="ig-url"
                         type="url"
-                        className={`flex-1 rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0D9488] focus:border-transparent ${error ? 'border-red-300 bg-red-50' : 'border-white/[0.06]'}`}
+                        className={`flex-1 rounded-lg border px-4 py-2.5 text-sm text-white bg-white/[0.04] placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#0D9488] focus:border-transparent ${error ? 'border-red-400/50 bg-red-500/10' : 'border-white/[0.06]'}`}
                         placeholder="Paste Instagram URL here..."
                         value={inputUrl}
                         onChange={e => { setInputUrl(e.target.value); if (error) setError(''); }}
@@ -197,7 +197,7 @@ function IgExtractorTab() {
                         {loading ? 'Extracting...' : 'Extract'}
                     </button>
                 </div>
-                {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+                {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
                 {result && <button className="mt-2 text-xs text-white/50 hover:text-white/70 underline" onClick={handleClear}>Clear</button>}
             </div>
 
@@ -267,7 +267,7 @@ function IgExtractorTab() {
                                         <td className="px-6 py-3"><code className="text-xs text-white/50 max-w-[150px] truncate block">{item.mediaId}</code></td>
                                         <td className="px-6 py-3 text-xs text-white/50">{new Date(item.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                                         <td className="px-6 py-3">
-                                            <button onClick={() => handleDelete(item.id)} className="p-1 rounded hover:bg-red-50 text-white/30 hover:text-red-500 transition-colors" title="Delete">
+                                            <button onClick={() => handleDelete(item.id)} className="p-1 rounded hover:bg-red-500/10 text-white/30 hover:text-red-500 transition-colors" title="Delete">
                                                 <Trash2 size={14} />
                                             </button>
                                         </td>
@@ -347,7 +347,7 @@ function TtExtractorTab() {
                         ref={inputRef}
                         id="tt-url"
                         type="url"
-                        className={`flex-1 rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0D9488] focus:border-transparent ${error ? 'border-red-300 bg-red-50' : 'border-white/[0.06]'}`}
+                        className={`flex-1 rounded-lg border px-4 py-2.5 text-sm text-white bg-white/[0.04] placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#0D9488] focus:border-transparent ${error ? 'border-red-400/50 bg-red-500/10' : 'border-white/[0.06]'}`}
                         placeholder="Paste TikTok URL here..."
                         value={inputUrl}
                         onChange={e => { setInputUrl(e.target.value); if (error) setError(''); }}
@@ -363,7 +363,7 @@ function TtExtractorTab() {
                         {loading ? 'Extracting...' : 'Extract'}
                     </button>
                 </div>
-                {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+                {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
                 {result && <button className="mt-2 text-xs text-white/50 hover:text-white/70 underline" onClick={handleClear}>Clear</button>}
             </div>
 
@@ -380,7 +380,7 @@ function TtExtractorTab() {
                     <ResultRow label="Post Type" value={result.postType.toUpperCase()} />
                     <ResultRow label="Clean URL" value={result.originalUrl} />
                     {result.isShortUrl && (
-                        <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700">
+                        <div className="mt-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">
                             Short URLs (vm.tiktok.com) cannot be fully resolved client-side. The video ID requires server-side redirect follow.
                         </div>
                     )}
@@ -439,7 +439,7 @@ function TtExtractorTab() {
                                         <td className="px-6 py-3">{item.username ? <code className="text-xs">@{item.username}</code> : <span className="text-white/30">—</span>}</td>
                                         <td className="px-6 py-3 text-xs text-white/50">{new Date(item.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                                         <td className="px-6 py-3">
-                                            <button onClick={() => handleDelete(item.id)} className="p-1 rounded hover:bg-red-50 text-white/30 hover:text-red-500 transition-colors" title="Delete">
+                                            <button onClick={() => handleDelete(item.id)} className="p-1 rounded hover:bg-red-500/10 text-white/30 hover:text-red-500 transition-colors" title="Delete">
                                                 <Trash2 size={14} />
                                             </button>
                                         </td>

@@ -457,7 +457,7 @@ export default function InvoiceForm({ initialData = null, onSave, onCancel }: { 
                                                 step="0.1"
                                                 value={invoice.taxRate}
                                                 onChange={(e) => setInvoice((prev: any) => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
-                                                className="w-full bg-blue-50 text-blue-700 text-right text-xs font-bold rounded py-0.5 px-1 border-none focus:ring-1 focus:ring-blue-200"
+                                                className="w-full bg-blue-500/10 text-blue-400 text-right text-xs font-bold rounded py-0.5 px-1 border-none focus:ring-1 focus:ring-blue-500/30"
                                             />
                                             <span className="absolute -right-3 top-0.5 text-blue-400 text-xs font-bold">%</span>
                                         </div>

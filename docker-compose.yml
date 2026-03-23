@@ -3,13 +3,8 @@ services:
     build: .
     ports:
       - "3000:3000"
-    volumes:
-      - app-data:/app/data
     env_file:
       - .env
     environment:
-      - DATABASE_URL=file:/app/data/prod.db
+      - NODE_ENV=production
     restart: unless-stopped
-
-volumes:
-  app-data:

@@ -73,17 +73,17 @@ export function AboutPage() {
             </section>
 
             {/* Mission */}
-            <section className="py-24 bg-[#0d0d12] border-y border-white/5">
+            <section className="py-24 bg-[#0d0d12] border-y border-white/5" aria-labelledby="mission-heading">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="grid lg:grid-cols-2 gap-16 items-center">
                         <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
                             <span className="text-[#6929C4] text-xs font-bold tracking-[0.2em] uppercase mb-4 block">Our Mission</span>
-                            <h2 className="text-4xl font-bold text-white mb-6">Unify Media Data. Empower Decisions.</h2>
+                            <h2 id="mission-heading" className="text-4xl font-bold text-white mb-6">Unify Media Data. Empower Decisions.</h2>
                             <p className="text-white/50 leading-relaxed mb-4">
-                                The media landscape is more fragmented than ever. Brands manage campaigns across dozens of platforms, agencies juggle multiple clients, and data lives in silos.
+                                The media landscape is more fragmented than ever. Brands manage campaigns across dozens of platforms, agencies juggle multiple clients, and data lives in silos. Collaborative Intelligence solves this fragmentation problem.
                             </p>
                             <p className="text-white/50 leading-relaxed">
-                                We built Collaborative Intelligence to bring it all together — one platform where every impression, click, and conversion is tracked, analyzed, and turned into actionable intelligence.
+                                We built Collaborative Intelligence to bring it all together — one platform where every impression, click, and conversion is tracked, analyzed, and turned into actionable intelligence for data-driven decisions.
                             </p>
                         </motion.div>
                         <motion.div
@@ -115,11 +115,11 @@ export function AboutPage() {
             </section>
 
             {/* Values */}
-            <section className="py-24">
+            <section className="py-24" aria-labelledby="values-heading">
                 <div className="max-w-7xl mx-auto px-6">
                     <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-16">
                         <span className="text-[#0D9488] text-xs font-bold tracking-[0.2em] uppercase mb-4 block">Our Values</span>
-                        <h2 className="text-4xl font-bold text-white">What Drives Us</h2>
+                        <h2 id="values-heading" className="text-4xl font-bold text-white">What Drives Us</h2>
                     </motion.div>
                     <motion.div variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {VALUES.map((v) => (

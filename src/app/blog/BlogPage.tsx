@@ -187,7 +187,7 @@ export function BlogPage() {
             </section>
 
             {/* Articles Grid */}
-            <section className="py-12 pb-32">
+            <section className="py-12 pb-32" aria-label="Blog articles">
                 <div className="max-w-6xl mx-auto px-6">
                     <motion.div
                         variants={staggerContainer}
@@ -201,18 +201,24 @@ export function BlogPage() {
                                 key={article.title}
                                 variants={fadeInUp}
                                 className="group rounded-2xl glass-card glass-card-hover overflow-hidden cursor-pointer"
+                                itemScope
+                                itemType="https://schema.org/BlogPosting"
                             >
-                                <div className="h-44 bg-gradient-to-br from-[#0D9488]/5 to-[#6929C4]/5 flex items-center justify-center">
-                                    <span className="material-symbols-outlined text-5xl text-white/10 group-hover:text-[#0D9488]/20 transition-colors">article</span>
+                                <div className="h-44 bg-gradient-to-br from-[#0D9488]/5 to-[#6929C4]/5 flex items-center justify-center" role="img" aria-label={`Illustration for ${article.title}`}>
+                                    <span className="material-symbols-outlined text-5xl text-white/10 group-hover:text-[#0D9488]/20 transition-colors" aria-hidden="true">article</span>
                                 </div>
                                 <div className="p-6">
                                     <div className="flex items-center gap-3 mb-3">
                                         <span className="text-[10px] font-bold tracking-wider uppercase text-[#0D9488] bg-[#0D9488]/10 px-2.5 py-1 rounded-full">{article.category}</span>
                                         <span className="text-xs text-white/30">{article.readTime}</span>
                                     </div>
-                                    <h3 className="font-bold text-white mb-2 group-hover:text-[#0D9488] transition-colors leading-snug">{article.title}</h3>
-                                    <p className="text-sm text-white/40 leading-relaxed line-clamp-3">{article.excerpt}</p>
-                                    <p className="mt-3 text-xs text-white/30">{new Date(article.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                                    <h3 className="font-bold text-white mb-2 group-hover:text-[#0D9488] transition-colors leading-snug" itemProp="headline">{article.title}</h3>
+                                    <p className="text-sm text-white/40 leading-relaxed line-clamp-3" itemProp="description">{article.excerpt}</p>
+                                    <p className="mt-3 text-xs text-white/30">
+                                        <time dateTime={article.date} itemProp="datePublished">
+                                            {new Date(article.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                        </time>
+                                    </p>
                                 </div>
                             </motion.article>
                         ))}

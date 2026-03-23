@@ -78,7 +78,7 @@ export const WidgetDrawer: React.FC<WidgetDrawerProps> = ({ isOpen, onClose }) =
                         </div>
 
                         {/* Search */}
-                        <div className="p-4 border-b border-gray-100 border-gray-800">
+                        <div className="p-4 border-b border-gray-800">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                                 <input
@@ -86,20 +86,20 @@ export const WidgetDrawer: React.FC<WidgetDrawerProps> = ({ isOpen, onClose }) =
                                     placeholder="Search widgets..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-9 pr-4 py-2 rounded-lg bg-gray-50 bg-gray-800 border-none outline-none focus:ring-2 focus:ring-[#0D9488]/50"
+                                    className="w-full pl-9 pr-4 py-2 rounded-lg bg-gray-800 text-white placeholder:text-white/30 border-none outline-none focus:ring-2 focus:ring-[#0D9488]/50"
                                 />
                             </div>
                         </div>
 
                         {/* Categories */}
-                        <div className="flex gap-2 p-4 overflow-x-auto scrollbar-hide border-b border-gray-100 border-gray-800">
+                        <div className="flex gap-2 p-4 overflow-x-auto scrollbar-hide border-b border-gray-800">
                             {WIDGET_CATEGORIES.map(cat => (
                                 <button
                                     key={cat.id}
                                     onClick={() => setSelectedCategory(cat.id)}
                                     className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedCategory === cat.id
-                                            ? 'bg-black text-white bg-white/[0.04] text-black'
-                                            : 'bg-gray-100 text-gray-600 bg-gray-800 text-gray-400 hover:bg-gray-200'
+                                            ? 'bg-white/[0.04] text-white'
+                                            : 'bg-gray-800 text-gray-400 hover:bg-white/[0.08]'
                                         }`}
                                 >
                                     {cat.name}

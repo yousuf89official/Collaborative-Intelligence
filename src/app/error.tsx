@@ -67,9 +67,9 @@ export default function GlobalError({
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 rounded-2xl border border-amber-100">
-                        <X className="h-4 w-4 text-amber-500 shrink-0" />
-                        <p className="text-[11px] text-amber-700 font-bold leading-tight">
+                    <div className="flex items-center gap-3 px-4 py-3 bg-amber-500/10 rounded-2xl border border-amber-500/20">
+                        <X className="h-4 w-4 text-amber-400 shrink-0" />
+                        <p className="text-[11px] text-amber-400 font-bold leading-tight">
                             Providing this technical log to our engineering department will significantly speed up the resolution process.
                         </p>
                     </div>

@@ -79,7 +79,9 @@ export interface User {
     slug?: string;
     email: string;
     role: string;
+    workRole?: string;
     status: string;
+    permissions?: string | null;
     password?: string;
     avatar?: string;
     lastActive?: string;
@@ -431,12 +433,7 @@ export const api = {
 
 // --- Legacy Compatibility Layer ---
 export const Service = {
-    getDashboardStats: async () => ({
-        activeCampaigns: 12,
-        totalSpend: 45000,
-        impressions: 1200000,
-        avgRoas: 3.2
-    }),
+    getDashboardStats: () => fetchClient<DashboardStats>('/dashboard'),
     analytics: api.analytics,
 };
 

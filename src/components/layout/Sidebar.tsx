@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { ALL_FEATURES, hasFeatureAccess } from '@/lib/features';
 
 interface NavItem {
     label: string;
@@ -174,7 +175,16 @@ export const Sidebar = () => {
 
             {/* Navigation */}
             <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto scrollbar-thin">
-                {NAV_SECTIONS.map((section) => (
+                {NAV_SECTIONS.map((section) => {
+                    // Filter items by user permissions
+                    const visibleItems = section.items.filter(item => {
+                        const feature = ALL_FEATURES.find(f => f.href === item.href);
+                        if (!feature) return true;
+                        return hasFeatureAccess(user?.role || '', (user as any)?.permissions, feature.key);
+                    });
+                    if (visibleItems.length === 0) return null;
+
+                    return (
                     <div key={section.title} className="mb-2">
                         {/* Section Header */}
                         {(isMobile || !collapsed) ? (
@@ -198,7 +208,7 @@ export const Sidebar = () => {
                         )}
 
                         {/* Section Items */}
-                        {!collapsedSections[section.title] && section.items.map((item) => {
+                        {!collapsedSections[section.title] && visibleItems.map((item) => {
                             const isActive = (pathname || '').startsWith(item.href);
                             const isExactMatch = item.href === '/dashboard' && pathname === '/dashboard';
                             const isHighlighted = item.href === '/dashboard' ? isExactMatch : isActive;
@@ -234,7 +244,8 @@ export const Sidebar = () => {
                             );
                         })}
                     </div>
-                ))}
+                    );
+                })}
             </nav>
 
             {/* Footer / User */}

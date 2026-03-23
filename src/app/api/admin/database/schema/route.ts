@@ -21,15 +21,17 @@ export async function GET() {
         for (const tableName of tableNames) {
             // 2. Get columns
             const columns: any[] = await prisma.$queryRawUnsafe(
-                `SELECT column_name, data_type, is_nullable, column_default,
-                        CASE WHEN pk.column_name IS NOT NULL THEN true ELSE false END AS is_pk
+                `SELECT c.column_name, c.data_type, c.is_nullable, c.column_default,
+                        CASE WHEN pk.pk_column IS NOT NULL THEN true ELSE false END AS is_pk
                  FROM information_schema.columns c
                  LEFT JOIN (
-                     SELECT kcu.column_name
+                     SELECT kcu.column_name AS pk_column
                      FROM information_schema.table_constraints tc
-                     JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name
-                     WHERE tc.table_name = $1 AND tc.constraint_type = 'PRIMARY KEY'
-                 ) pk ON pk.column_name = c.column_name
+                     JOIN information_schema.key_column_usage kcu
+                       ON tc.constraint_name = kcu.constraint_name
+                       AND tc.table_schema = kcu.table_schema
+                     WHERE tc.table_name = $1 AND tc.table_schema = 'public' AND tc.constraint_type = 'PRIMARY KEY'
+                 ) pk ON pk.pk_column = c.column_name
                  WHERE c.table_schema = 'public' AND c.table_name = $1
                  ORDER BY c.ordinal_position;`,
                 tableName
