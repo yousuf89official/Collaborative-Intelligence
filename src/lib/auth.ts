@@ -26,14 +26,22 @@ export const authOptions: NextAuthOptions = {
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) return null;
 
+                // Retry logic for Neon cold starts (free tier suspends after 5min)
                 let user;
-                try {
-                    user = await prisma.user.findUnique({
-                        where: { email: credentials.email.toLowerCase().trim() }
-                    });
-                } catch (dbErr: any) {
-                    console.error('[Auth] DB query failed:', dbErr.message);
-                    return null;
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    try {
+                        user = await prisma.user.findUnique({
+                            where: { email: credentials.email.toLowerCase().trim() }
+                        });
+                        break; // Success — exit retry loop
+                    } catch (dbErr: any) {
+                        if (attempt === 2) {
+                            console.error('[Auth] DB query failed after 3 attempts:', dbErr.message);
+                            return null;
+                        }
+                        // Wait before retry (Neon waking up)
+                        await new Promise(r => setTimeout(r, 2000));
+                    }
                 }
 
                 // Always run bcrypt compare to prevent timing-based user enumeration

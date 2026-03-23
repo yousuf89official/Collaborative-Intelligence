@@ -72,7 +72,7 @@ const tiktokAdsAdapter: PlatformAdapter = {
             const engagement = parseInt(m.likes || '0') + parseInt(m.comments || '0') +
                                parseInt(m.shares || '0') + parseInt(m.follows || '0');
 
-            metrics.push({
+            const metric: any = {
                 date: new Date(dims.stat_time_day),
                 impressions: parseInt(m.impressions || '0'),
                 clicks: parseInt(m.clicks || '0'),
@@ -82,7 +82,10 @@ const tiktokAdsAdapter: PlatformAdapter = {
                 currency: integration.brand?.defaultCurrency || 'USD',
                 brandId: integration.brandId,
                 campaignId: undefined,
-            });
+                _externalCampaignId: dims.campaign_id || null,
+                _externalCampaignName: m.campaign_name || null,
+            };
+            metrics.push(metric);
         }
 
         return metrics;

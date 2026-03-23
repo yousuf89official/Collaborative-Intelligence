@@ -92,18 +92,21 @@ const googleAdsAdapter: PlatformAdapter = {
                 const camp = result.campaign || {};
                 const m = result.metrics || {};
 
-                metrics.push({
+                const metric: any = {
                     date: new Date(seg.date.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')),
                     impressions: parseInt(m.impressions || '0'),
                     clicks: parseInt(m.clicks || '0'),
-                    spend: parseInt(m.costMicros || '0') / 1_000_000, // micros → currency units
-                    reach: parseInt(m.impressions || '0'), // Google Ads doesn't have reach, use impressions
+                    spend: parseInt(m.costMicros || '0') / 1_000_000,
+                    reach: parseInt(m.impressions || '0'),
                     engagement: parseInt(m.interactions || '0'),
                     currency: integration.brand?.defaultCurrency || 'USD',
                     brandId: integration.brandId,
-                    // Map to existing campaign if name matches, otherwise store as brand-level
-                    campaignId: undefined, // Will be matched below
-                });
+                    // External campaign info for mapping via CampaignIntegration
+                    _externalCampaignId: camp.id?.replace('customers/', '').replace('/campaigns/', ':') || null,
+                    _externalCampaignName: camp.name || null,
+                    campaignId: undefined, // Will be mapped by syncEngine via CampaignIntegration
+                };
+                metrics.push(metric);
             }
         }
 

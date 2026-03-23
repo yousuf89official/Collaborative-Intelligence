@@ -95,9 +95,32 @@ export async function syncIntegration(integrationId: string, dateFrom?: Date, da
         errors.push(`Fetch error: ${err.message}`);
     }
 
+    // Load campaign integration mappings to route metrics to correct campaigns
+    const campaignLinks = await prisma.campaignIntegration.findMany({
+        where: { integrationId: integration.id, isActive: true },
+        select: { campaignId: true, externalCampaignId: true, externalName: true },
+    });
+
+    // Build lookup: externalCampaignId/externalName → our campaignId
+    const campaignMap = new Map<string, string>();
+    for (const link of campaignLinks) {
+        if (link.externalCampaignId) campaignMap.set(link.externalCampaignId, link.campaignId);
+        if (link.externalName) campaignMap.set(link.externalName.toLowerCase(), link.campaignId);
+    }
+
     // Upsert metrics to database (deduplicate by date + brandId + campaignId + channelId)
     let written = 0;
     for (const m of metrics) {
+        // Map external campaign to our campaign via the integration links
+        if (!m.campaignId && campaignMap.size > 0) {
+            // Adapters may set a temporary externalCampaignId on the metric
+            const extId = (m as any)._externalCampaignId;
+            const extName = (m as any)._externalCampaignName;
+            if (extId && campaignMap.has(extId)) m.campaignId = campaignMap.get(extId);
+            else if (extName && campaignMap.has(extName.toLowerCase())) m.campaignId = campaignMap.get(extName.toLowerCase());
+            // If still no match, use the first linked campaign as default
+            else if (campaignLinks.length === 1) m.campaignId = campaignLinks[0].campaignId;
+        }
         try {
             // Check for existing metric on same date/brand/campaign/channel
             const existing = await prisma.metric.findFirst({

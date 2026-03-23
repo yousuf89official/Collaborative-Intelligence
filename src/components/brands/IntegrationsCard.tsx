@@ -96,11 +96,17 @@ export const IntegrationsCard = ({ brandId }: IntegrationsCardProps) => {
                 // Res structure: { connected, hasPending, accounts: [] }
                 data = { accounts: res.accounts || [], hasPending: res.hasPending };
             } else {
-                // Generics
+                // Generic providers — check via brand integrations table
                 const response = await fetch(`/api/integrations/${providerKey}?brandId=${brandId}`);
-                if (!response.ok) throw new Error(`Status ${response.status}`);
-                const res = await response.json();
-                data = { accounts: res.accounts || [] };
+                if (response.status === 404) {
+                    // No dedicated endpoint — skip silently
+                    data = { accounts: [] };
+                } else if (!response.ok) {
+                    throw new Error(`Status ${response.status}`);
+                } else {
+                    const res = await response.json();
+                    data = { accounts: res.accounts || [] };
+                }
             }
             setIntegrationsData(prev => ({
                 ...prev,

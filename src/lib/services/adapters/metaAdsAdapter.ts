@@ -76,7 +76,7 @@ const metaAdsAdapter: PlatformAdapter = {
             );
             const engagement = engagementActions.reduce((sum: number, a: any) => sum + parseInt(a.value || '0'), 0);
 
-            metrics.push({
+            const metric: any = {
                 date: new Date(row.date_start),
                 impressions: parseInt(row.impressions || '0'),
                 clicks: parseInt(row.clicks || '0'),
@@ -86,7 +86,10 @@ const metaAdsAdapter: PlatformAdapter = {
                 currency: integration.brand?.defaultCurrency || 'USD',
                 brandId: integration.brandId,
                 campaignId: undefined,
-            });
+                _externalCampaignId: row.campaign_id || null,
+                _externalCampaignName: row.campaign_name || null,
+            };
+            metrics.push(metric);
         }
 
         return metrics;
