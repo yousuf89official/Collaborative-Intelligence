@@ -220,6 +220,171 @@ model InviteToken {
   @@index([token])
 }
 
+// ─── WEBSITE ANALYTICS & TRACKING ────────────────────────────────────
+
+model PageView {
+  id          String   @id @default(cuid())
+  path        String
+  referrer    String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmContent  String?
+  utmTerm     String?
+  deviceType  String?
+  browser     String?
+  country     String?
+  sessionId   String
+  duration    Int?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path, createdAt])
+  @@index([sessionId])
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  name      String
+  category  String?
+  path      String
+  sessionId String
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  @@index([name, createdAt])
+  @@index([sessionId])
+  @@index([category, createdAt])
+}
+
+model ClickEvent {
+  id             String   @id @default(cuid())
+  sessionId      String
+  path           String
+  x              Float
+  y              Float
+  elementTag     String?
+  elementText    String?
+  elementHref    String?
+  viewportWidth  Int?
+  viewportHeight Int?
+  createdAt      DateTime @default(now())
+
+  @@index([path, createdAt])
+  @@index([sessionId])
+}
+
+model SessionDetail {
+  id            String   @id @default(cuid())
+  sessionId     String   @unique
+  ip            String?
+  userAgent     String?
+  deviceType    String?
+  browser       String?
+  os            String?
+  screenWidth   Int?
+  screenHeight  Int?
+  language      String?
+  country       String?
+  city          String?
+  referrer      String?
+  landingPage   String?
+  exitPage      String?
+  entryTime     DateTime @default(now())
+  lastActivity  DateTime @default(now())
+  pageCount     Int      @default(1)
+  totalDuration Int      @default(0)
+  isBounce      Boolean  @default(true)
+  utmSource     String?
+  utmMedium     String?
+  utmCampaign   String?
+
+  @@index([entryTime])
+  @@index([lastActivity])
+  @@index([entryTime, deviceType])
+  @@index([entryTime, browser])
+  @@index([entryTime, os])
+  @@index([entryTime, country])
+  @@index([entryTime, isBounce])
+  @@index([entryTime, exitPage])
+  @@index([entryTime, language])
+  @@index([entryTime, city])
+}
+
+model BehaviorEvent {
+  id        String   @id @default(cuid())
+  sessionId String
+  visitorId String?
+  type      String
+  path      String
+  data      String?
+  createdAt DateTime @default(now())
+
+  @@index([type, createdAt])
+  @@index([sessionId])
+  @@index([path, createdAt])
+  @@index([createdAt])
+}
+
+model SiteVisitor {
+  id               String           @id @default(cuid())
+  fingerprintHash  String           @unique
+  firstSeen        DateTime         @default(now())
+  lastSeen         DateTime         @default(now())
+  visitCount       Int              @default(1)
+  name             String?
+  email            String?
+  company          String?
+  role             String?
+  totalPageViews   Int              @default(0)
+  totalTimeOnSite  Int              @default(0)
+  topPages         String?
+  interests        String?
+  profileStage     String           @default("anonymous")
+  firstReferrer    String?
+  firstUtmSource   String?
+  firstUtmMedium   String?
+  firstUtmCampaign String?
+  firstLandingPage String?
+  sessions         VisitorSession[]
+
+  @@index([firstSeen])
+  @@index([lastSeen])
+  @@index([profileStage])
+  @@index([firstUtmSource])
+  @@index([totalPageViews])
+}
+
+model VisitorSession {
+  id        String      @id @default(cuid())
+  visitorId String
+  sessionId String      @unique
+  createdAt DateTime    @default(now())
+  visitor   SiteVisitor @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+}
+
+model AudienceIntelligence {
+  id              String   @id @default(cuid())
+  sessionId       String   @unique
+  interests       String?
+  browsingHistory String?
+  lastSearch      String?
+  topTopics       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AnalyticsInsight {
+  id           String   @id @default(cuid())
+  summary      String
+  overallScore Int      @default(50)
+  sectionsJson String
+  actionsJson  String
+  periodFrom   String
+  periodTo     String
+  createdAt    DateTime @default(now())
+}
+
 // ─── CREATIVE ASSETS ─────────────────────────────────────────────────
 
 model Creative {
