@@ -9,9 +9,12 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const brandId = searchParams.get('brandId');
+    const statusFilter = searchParams.get('status');
 
     try {
-        const where: any = { status: { not: 'Archive' } };
+        const where: any = statusFilter === 'Archive'
+            ? { status: 'Archive' }
+            : { status: { not: 'Archive' } };
         if (brandId) where.brandId = brandId;
 
         const campaigns = await prisma.campaign.findMany({

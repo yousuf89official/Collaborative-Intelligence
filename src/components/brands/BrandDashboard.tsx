@@ -189,6 +189,46 @@ export default function BrandDashboard({ brand: initialBrand, industries }: Bran
         }
     };
 
+    const handleArchiveCampaign = async (id: string, name: string) => {
+        if (!confirm(`Archive campaign "${name}"? You can restore it later.`)) return;
+
+        try {
+            const res = await fetch(`/api/campaigns/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'Archive' }),
+            });
+            if (res.ok) {
+                setCampaigns(prev => prev.filter(c => c.id !== id));
+                toast.success("Campaign archived");
+            } else {
+                const data = await res.json();
+                toast.error(data.error || 'Failed to archive campaign');
+            }
+        } catch {
+            toast.error('Failed to archive campaign');
+        }
+    };
+
+    const handleRestoreCampaign = async (id: string, name: string) => {
+        try {
+            const res = await fetch(`/api/campaigns/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'Active' }),
+            });
+            if (res.ok) {
+                toast.success(`Campaign "${name}" restored`);
+                await fetchData();
+            } else {
+                const data = await res.json();
+                toast.error(data.error || 'Failed to restore campaign');
+            }
+        } catch {
+            toast.error('Failed to restore campaign');
+        }
+    };
+
     const handleAddCreative = (creative: Creative) => {
         setCreatives(prev => [...prev, creative]);
     };
@@ -293,6 +333,8 @@ export default function BrandDashboard({ brand: initialBrand, industries }: Bran
                         onAddCampaign={handleAddCampaign}
                         onSaveCampaign={handleSaveCampaign}
                         onDeleteCampaign={handleDeleteCampaign}
+                        onArchiveCampaign={handleArchiveCampaign}
+                        onRestoreCampaign={handleRestoreCampaign}
                         onAddCreative={handleAddCreative}
                         showAlert={handleAlert}
                         onRefreshBrand={handleRefreshBrand}

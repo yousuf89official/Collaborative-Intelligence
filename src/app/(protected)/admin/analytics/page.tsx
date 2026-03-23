@@ -1,295 +1,396 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { BarChart3, Eye, MousePointer, Clock, Users, TrendingUp, MapPin, Smartphone, Globe, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-
-const METRICS = [
-    { label: 'Active Users', value: '2,847', change: '+12.3%', up: true, icon: Users },
-    { label: 'Sessions', value: '8,432', change: '+8.7%', up: true, icon: Eye },
-    { label: 'Engagement Rate', value: '68.4%', change: '+5.2%', up: true, icon: MousePointer },
-    { label: 'Avg. Session Duration', value: '3m 42s', change: '-2.1%', up: false, icon: Clock },
-    { label: 'Bounce Rate', value: '31.6%', change: '-5.2%', up: true, icon: ArrowDownRight },
-    { label: 'Conversion Rate', value: '4.2%', change: '+1.8%', up: true, icon: TrendingUp },
-];
-
-const PAGES_DATA = [
-    { path: '/', title: 'Home Page', views: 3421, avgTime: '2m 15s', bounceRate: '28%', entries: 2105 },
-    { path: '/pricing', title: 'Pricing', views: 1847, avgTime: '4m 32s', bounceRate: '22%', entries: 845 },
-    { path: '/about', title: 'About', views: 982, avgTime: '1m 48s', bounceRate: '45%', entries: 423 },
-    { path: '/blog', title: 'Blog', views: 756, avgTime: '5m 12s', bounceRate: '35%', entries: 312 },
-    { path: '/contact', title: 'Contact', views: 634, avgTime: '3m 05s', bounceRate: '18%', entries: 198 },
-];
-
-const TRAFFIC_SOURCES = [
-    { source: 'Organic Search', sessions: 3842, pct: 45.6, color: '#0D9488' },
-    { source: 'Direct', sessions: 1689, pct: 20.0, color: '#4F46E5' },
-    { source: 'Social Media', sessions: 1256, pct: 14.9, color: '#22c55e' },
-    { source: 'Paid Search', sessions: 892, pct: 10.6, color: '#f59e0b' },
-    { source: 'Referral', sessions: 521, pct: 6.2, color: '#20C997' },
-    { source: 'Email', sessions: 232, pct: 2.7, color: '#ef4444' },
-];
-
-const GEO_DATA = [
-    { country: 'Indonesia', sessions: 2156, pct: 25.6, flag: '🇮🇩' },
-    { country: 'United States', sessions: 1823, pct: 21.6, flag: '🇺🇸' },
-    { country: 'Singapore', sessions: 945, pct: 11.2, flag: '🇸🇬' },
-    { country: 'United Kingdom', sessions: 687, pct: 8.1, flag: '🇬🇧' },
-    { country: 'India', sessions: 534, pct: 6.3, flag: '🇮🇳' },
-    { country: 'Malaysia', sessions: 423, pct: 5.0, flag: '🇲🇾' },
-    { country: 'Australia', sessions: 312, pct: 3.7, flag: '🇦🇺' },
-    { country: 'Others', sessions: 1552, pct: 18.4, flag: '🌍' },
-];
-
-const DEVICE_DATA = [
-    { device: 'Desktop', pct: 62, color: '#0D9488' },
-    { device: 'Mobile', pct: 31, color: '#4F46E5' },
-    { device: 'Tablet', pct: 7, color: '#22c55e' },
-];
-
-const HEATMAP_ZONES = [
-    { zone: 'Hero CTA (Book a Demo)', clicks: 1245, color: 'bg-red-500' },
-    { zone: 'Navigation - Pricing', clicks: 892, color: 'bg-orange-500' },
-    { zone: 'Hero CTA (Login)', clicks: 756, color: 'bg-yellow-500' },
-    { zone: 'Features Section', clicks: 623, color: 'bg-green-500' },
-    { zone: 'Footer - Contact', clicks: 421, color: 'bg-blue-500' },
-    { zone: 'CTA Email Input', clicks: 378, color: 'bg-purple-500' },
-    { zone: 'Blog Articles', clicks: 234, color: 'bg-teal-500' },
-];
-
-const LIVE_USERS = [
-    { id: 1, page: '/', country: 'Indonesia', device: 'Desktop', duration: '2m 15s', actions: 5 },
-    { id: 2, page: '/pricing', country: 'United States', device: 'Mobile', duration: '4m 32s', actions: 8 },
-    { id: 3, page: '/blog', country: 'Singapore', device: 'Desktop', duration: '1m 48s', actions: 3 },
-    { id: 4, page: '/contact', country: 'India', device: 'Desktop', duration: '0m 45s', actions: 2 },
-    { id: 5, page: '/', country: 'Malaysia', device: 'Mobile', duration: '3m 12s', actions: 6 },
-];
+import {
+    BarChart3, Eye, MousePointer, Clock, Users, TrendingUp, MapPin,
+    Smartphone, Globe, ArrowUpRight, ArrowDownRight, RefreshCw, Loader2,
+    Monitor, Tablet, Zap, FileText, Download, Trash2
+} from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AnalyticsPage() {
-    const [timeRange, setTimeRange] = useState('7d');
-    const [activeTab, setActiveTab] = useState<'overview' | 'behavior' | 'heatmap' | 'live'>('overview');
+    const [loading, setLoading] = useState(true);
+    const [period, setPeriod] = useState(30);
+    const [activeTab, setActiveTab] = useState<'overview' | 'pages' | 'sources' | 'devices' | 'geo' | 'sessions' | 'events'>('overview');
+
+    // Data states
+    const [kpis, setKpis] = useState<any>(null);
+    const [trafficChart, setTrafficChart] = useState<any[]>([]);
+    const [topPages, setTopPages] = useState<any[]>([]);
+    const [sources, setSources] = useState<any>(null);
+    const [devices, setDevices] = useState<any>(null);
+    const [bounce, setBounce] = useState<any>(null);
+    const [geo, setGeo] = useState<any>(null);
+    const [activeSessions, setActiveSessions] = useState<any>(null);
+    const [visitors, setVisitors] = useState<any>(null);
+    const [events, setEvents] = useState<any[]>([]);
+    const [sessions, setSessions] = useState<any[]>([]);
+
+    const range = {
+        from: new Date(Date.now() - period * 24 * 60 * 60 * 1000).toISOString(),
+        to: new Date().toISOString(),
+    };
+
+    const fetchData = useCallback(async () => {
+        setLoading(true);
+        try {
+            // Import server actions dynamically
+            const { getKpiStats, getTrafficChart, getTopPages, getTrafficSources,
+                    getDeviceBreakdown, getBounceEngagement, getGeographicData,
+                    getActiveSessions, getVisitorIntelligence, getEventExplorer,
+                    getSessionDetails } = await import('@/app/actions/dashboard-analytics');
+
+            const r = range;
+            const [kpi, chart, pages, src, dev, bnc, geography, active, vis, evt, sess] = await Promise.allSettled([
+                getKpiStats(r), getTrafficChart('daily', r), getTopPages(10, r),
+                getTrafficSources(r), getDeviceBreakdown(r), getBounceEngagement(r),
+                getGeographicData(r), getActiveSessions(), getVisitorIntelligence(r),
+                getEventExplorer(r), getSessionDetails(r, 20),
+            ]);
+
+            if (kpi.status === 'fulfilled') setKpis(kpi.value);
+            if (chart.status === 'fulfilled') setTrafficChart(chart.value);
+            if (pages.status === 'fulfilled') setTopPages(pages.value);
+            if (src.status === 'fulfilled') setSources(src.value);
+            if (dev.status === 'fulfilled') setDevices(dev.value);
+            if (bnc.status === 'fulfilled') setBounce(bnc.value);
+            if (geography.status === 'fulfilled') setGeo(geography.value);
+            if (active.status === 'fulfilled') setActiveSessions(active.value);
+            if (vis.status === 'fulfilled') setVisitors(vis.value);
+            if (evt.status === 'fulfilled') setEvents(evt.value);
+            if (sess.status === 'fulfilled') setSessions(sess.value);
+        } catch (err) {
+            console.error('Analytics fetch error:', err);
+            toast.error('Failed to load analytics');
+        } finally {
+            setLoading(false);
+        }
+    }, [period]);
+
+    useEffect(() => { fetchData(); }, [fetchData]);
+
+    const StatCard = ({ label, value, change, icon: Icon }: { label: string; value: string | number; change?: number; icon: any }) => (
+        <div className="p-5 rounded-xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+            <div className="flex items-center justify-between mb-2">
+                <Icon className="h-4 w-4 text-white/30" />
+                {change !== undefined && change !== 0 && (
+                    <span className={`text-[10px] font-bold flex items-center gap-0.5 ${change > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {change > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                        {change > 0 ? '+' : ''}{change}%
+                    </span>
+                )}
+            </div>
+            <p className="text-2xl font-bold text-white">{typeof value === 'number' ? value.toLocaleString() : value}</p>
+            <p className="text-[10px] text-white/40 mt-1">{label}</p>
+        </div>
+    );
+
+    if (loading && !kpis) {
+        return (
+            <div className="flex items-center justify-center py-32">
+                <div className="text-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-[#0D9488] mx-auto mb-3" />
+                    <p className="text-xs text-white/40">Loading website analytics...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <PageHeader
                 icon={BarChart3}
-                category="Growth"
-                title="Analytics & Tracking"
-                description="GA4-powered analytics with heatmaps, behavior tracking, and real-time visitor monitoring for global user acquisition and retention."
+                category="Platform"
+                title="Website Analytics"
+                description="Real-time website traffic, visitor behavior, and engagement metrics."
                 actions={
-                    <div className="flex gap-2">
-                        {['24h', '7d', '30d', '90d'].map(range => (
-                            <button key={range} onClick={() => setTimeRange(range)} className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase ${timeRange === range ? 'bg-[#0D9488] text-white' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>
-                                {range}
+                    <div className="flex items-center gap-2">
+                        {[7, 14, 30, 90].map(d => (
+                            <button key={d} onClick={() => setPeriod(d)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${period === d ? 'bg-[#0D9488] text-white shadow-lg shadow-teal-500/20' : 'bg-white/[0.03] text-white/40 border border-white/[0.06]'}`}>
+                                {d}d
                             </button>
                         ))}
+                        <button onClick={fetchData} className="p-2 rounded-lg hover:bg-white/[0.04] text-white/30 hover:text-white transition-colors ml-2">
+                            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                        </button>
                     </div>
                 }
             />
 
+            {/* Live Sessions Badge */}
+            {activeSessions && activeSessions.count > 0 && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/5 border border-green-500/10">
+                    <span className="relative flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
+                    </span>
+                    <span className="text-sm font-bold text-green-400">{activeSessions.count} active visitor{activeSessions.count !== 1 ? 's' : ''} right now</span>
+                </div>
+            )}
+
+            {/* KPI Cards */}
+            {kpis && (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <StatCard label="Page Views" value={kpis.pageViews} change={kpis.pageViewsChange} icon={Eye} />
+                    <StatCard label="Sessions" value={kpis.sessions} change={kpis.sessionsChange} icon={BarChart3} />
+                    <StatCard label="Unique Visitors" value={kpis.uniqueVisitors} change={kpis.uniqueVisitorsChange} icon={Users} />
+                    <StatCard label="Pages/Session" value={kpis.avgPagesPerSession} icon={FileText} />
+                    <StatCard label="Bounce Rate" value={bounce ? `${bounce.bounceRate}%` : '—'} icon={ArrowDownRight} />
+                    <StatCard label="Avg Duration" value={bounce ? `${Math.floor(bounce.avgDuration / 60)}m ${bounce.avgDuration % 60}s` : '—'} icon={Clock} />
+                </div>
+            )}
+
             {/* Tabs */}
-            <div className="flex gap-2 border-b border-white/10">
+            <div className="flex gap-1 overflow-x-auto border-b border-white/[0.06]">
                 {[
                     { id: 'overview', label: 'Overview' },
-                    { id: 'behavior', label: 'Behavior & Pages' },
-                    { id: 'heatmap', label: 'Heatmap & Clicks' },
-                    { id: 'live', label: 'Live Users' },
+                    { id: 'pages', label: 'Top Pages' },
+                    { id: 'sources', label: 'Traffic Sources' },
+                    { id: 'devices', label: 'Devices' },
+                    { id: 'geo', label: 'Geography' },
+                    { id: 'sessions', label: 'Sessions' },
+                    { id: 'events', label: 'Events' },
                 ].map(tab => (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${activeTab === tab.id ? 'border-[#0D9488] text-[#0D9488]' : 'border-transparent text-white/40 hover:text-white/60'}`}>
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-[#0D9488] text-[#0D9488]' : 'border-transparent text-white/40 hover:text-white/60'}`}>
                         {tab.label}
                     </button>
                 ))}
             </div>
 
+            {/* Overview Tab */}
             {activeTab === 'overview' && (
-                <>
-                    {/* Key Metrics */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        {METRICS.map(m => (
-                            <div key={m.label} className="p-4 rounded-xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
-                                <div className="flex items-center justify-between mb-2">
-                                    <m.icon className="h-4 w-4 text-white/30" />
-                                    <span className={`text-[10px] font-bold flex items-center gap-0.5 ${m.up ? 'text-green-400' : 'text-red-400'}`}>
-                                        {m.up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                                        {m.change}
-                                    </span>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Traffic Chart */}
+                    <div className="p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+                        <h3 className="font-bold text-white mb-4">Daily Page Views</h3>
+                        <div className="space-y-1">
+                            {trafficChart.slice(-14).map((d: any) => {
+                                const max = Math.max(...trafficChart.map((t: any) => t.views), 1);
+                                return (
+                                    <div key={d.date} className="flex items-center gap-3">
+                                        <span className="text-[10px] text-white/30 w-16 shrink-0">{d.date.split('-').slice(1).join('/')}</span>
+                                        <div className="flex-1 h-5 bg-white/5 rounded overflow-hidden">
+                                            <div className="h-full bg-gradient-to-r from-[#0D9488] to-[#0EA5E9] rounded" style={{ width: `${(d.views / max) * 100}%` }} />
+                                        </div>
+                                        <span className="text-xs font-bold text-white w-12 text-right">{d.views}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Visitor Intelligence */}
+                    {visitors && (
+                        <div className="p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+                            <h3 className="font-bold text-white mb-4">Visitor Intelligence</h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="p-3 rounded-lg bg-white/[0.03] border border-white/5">
+                                    <p className="text-[10px] text-white/40">New Visitors</p>
+                                    <p className="text-xl font-bold text-white">{visitors.newVisitors}</p>
                                 </div>
-                                <p className="text-xl font-bold text-white">{m.value}</p>
-                                <p className="text-[10px] text-white/40 mt-1">{m.label}</p>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Traffic & Geo */}
-                    <div className="grid grid-cols-12 gap-6">
-                        <div className="col-span-12 lg:col-span-5 p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
-                            <h3 className="font-bold text-white mb-4">Traffic Sources</h3>
-                            <div className="space-y-3">
-                                {TRAFFIC_SOURCES.map(t => (
-                                    <div key={t.source} className="flex items-center gap-3">
-                                        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
-                                        <span className="text-xs text-white/60 flex-1">{t.source}</span>
-                                        <span className="text-xs font-mono text-white/40">{t.sessions.toLocaleString()}</span>
-                                        <div className="w-20 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                            <div className="h-full rounded-full" style={{ width: `${t.pct}%`, backgroundColor: t.color }} />
-                                        </div>
-                                        <span className="text-[10px] text-white/30 w-10 text-right">{t.pct}%</span>
+                                <div className="p-3 rounded-lg bg-white/[0.03] border border-white/5">
+                                    <p className="text-[10px] text-white/40">Returning</p>
+                                    <p className="text-xl font-bold text-[#0D9488]">{visitors.returningVisitors}</p>
+                                </div>
+                                <div className="p-3 rounded-lg bg-white/[0.03] border border-white/5 col-span-2">
+                                    <p className="text-[10px] text-white/40">Return Rate</p>
+                                    <p className="text-xl font-bold text-white">{visitors.returnRate}%</p>
+                                    <div className="mt-2 h-2 bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full bg-gradient-to-r from-[#0D9488] to-[#0EA5E9] rounded-full" style={{ width: `${visitors.returnRate}%` }} />
                                     </div>
-                                ))}
+                                </div>
                             </div>
                         </div>
-
-                        <div className="col-span-12 lg:col-span-4 p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
-                            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><MapPin className="h-4 w-4 text-[#0D9488]" /> Geographic Distribution</h3>
-                            <div className="space-y-2.5">
-                                {GEO_DATA.map(g => (
-                                    <div key={g.country} className="flex items-center gap-2">
-                                        <span className="text-sm">{g.flag}</span>
-                                        <span className="text-xs text-white/60 flex-1">{g.country}</span>
-                                        <span className="text-[10px] font-mono text-white/40">{g.pct}%</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="col-span-12 lg:col-span-3 p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
-                            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Smartphone className="h-4 w-4 text-[#4F46E5]" /> Devices</h3>
-                            <div className="space-y-4">
-                                {DEVICE_DATA.map(d => (
-                                    <div key={d.device}>
-                                        <div className="flex justify-between mb-1">
-                                            <span className="text-xs text-white/60">{d.device}</span>
-                                            <span className="text-xs font-bold text-white">{d.pct}%</span>
-                                        </div>
-                                        <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                                            <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${d.pct}%`, backgroundColor: d.color }} />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </>
+                    )}
+                </div>
             )}
 
-            {activeTab === 'behavior' && (
+            {/* Top Pages Tab */}
+            {activeTab === 'pages' && (
                 <div className="p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
-                    <h3 className="font-bold text-white mb-4">Page Performance</h3>
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="text-[10px] text-white/30 uppercase tracking-wider border-b border-white/5">
-                                    <th className="text-left py-3 px-4">Page</th>
-                                    <th className="text-right py-3 px-4">Views</th>
-                                    <th className="text-right py-3 px-4">Avg. Time</th>
-                                    <th className="text-right py-3 px-4">Bounce Rate</th>
-                                    <th className="text-right py-3 px-4">Entries</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {PAGES_DATA.map(p => (
+                    <h3 className="font-bold text-white mb-4">Top Pages by Views</h3>
+                    <table className="w-full">
+                        <thead>
+                            <tr className="text-[10px] text-white/30 uppercase tracking-wider border-b border-white/5">
+                                <th className="text-left py-3 px-4">#</th>
+                                <th className="text-left py-3 px-4">Page</th>
+                                <th className="text-right py-3 px-4">Views</th>
+                                <th className="text-right py-3 px-4">Share</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {topPages.map((p: any, i: number) => {
+                                const total = topPages.reduce((s: number, t: any) => s + t.views, 0);
+                                const pct = total > 0 ? ((p.views / total) * 100).toFixed(1) : '0';
+                                return (
                                     <tr key={p.path} className="border-b border-white/5 hover:bg-white/[0.02]">
-                                        <td className="py-3 px-4">
-                                            <p className="text-sm text-white font-medium">{p.title}</p>
-                                            <p className="text-[10px] text-white/30">{p.path}</p>
-                                        </td>
-                                        <td className="text-right py-3 px-4 text-sm text-white font-mono">{p.views.toLocaleString()}</td>
-                                        <td className="text-right py-3 px-4 text-sm text-white/60">{p.avgTime}</td>
-                                        <td className="text-right py-3 px-4 text-sm text-white/60">{p.bounceRate}</td>
-                                        <td className="text-right py-3 px-4 text-sm text-white/60">{p.entries.toLocaleString()}</td>
+                                        <td className="py-3 px-4 text-xs text-white/30">{i + 1}</td>
+                                        <td className="py-3 px-4 text-sm font-medium text-white font-mono">{p.path}</td>
+                                        <td className="py-3 px-4 text-sm font-bold text-white text-right">{p.views.toLocaleString()}</td>
+                                        <td className="py-3 px-4 text-xs text-white/40 text-right">{pct}%</td>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                    {topPages.length === 0 && <p className="text-center text-sm text-white/30 py-8">No page view data yet</p>}
                 </div>
             )}
 
-            {activeTab === 'heatmap' && (
-                <div className="grid grid-cols-12 gap-6">
-                    <div className="col-span-12 lg:col-span-7 p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
-                        <h3 className="font-bold text-white mb-4">Click Heatmap Zones</h3>
-                        <div className="space-y-3">
-                            {HEATMAP_ZONES.map((zone, idx) => (
-                                <div key={zone.zone} className="flex items-center gap-3">
-                                    <span className="text-xs text-white/30 w-4">{idx + 1}</span>
-                                    <div className={`w-3 h-3 rounded-full ${zone.color}`} />
-                                    <span className="text-sm text-white/70 flex-1">{zone.zone}</span>
-                                    <span className="text-sm font-bold text-white">{zone.clicks.toLocaleString()} clicks</span>
-                                    <div className="w-24 h-2 bg-white/5 rounded-full overflow-hidden">
-                                        <div className={`h-full rounded-full ${zone.color}`} style={{ width: `${(zone.clicks / 1245) * 100}%` }} />
-                                    </div>
+            {/* Traffic Sources Tab */}
+            {activeTab === 'sources' && sources && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+                        <h3 className="font-bold text-white mb-4">UTM Sources</h3>
+                        <div className="space-y-2">
+                            {sources.utmSources.length > 0 ? sources.utmSources.map((s: any) => (
+                                <div key={s.source} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03] border border-white/5">
+                                    <span className="text-xs text-white/60">{s.source}</span>
+                                    <span className="text-sm font-bold text-white">{s.count}</span>
                                 </div>
-                            ))}
+                            )) : <p className="text-sm text-white/30 text-center py-4">No UTM data yet</p>}
                         </div>
-                    </div>
-                    <div className="col-span-12 lg:col-span-5 p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
-                        <h3 className="font-bold text-white mb-4">Scroll Depth</h3>
-                        <div className="space-y-3">
-                            {[
-                                { depth: '25%', pct: 92 },
-                                { depth: '50%', pct: 68 },
-                                { depth: '75%', pct: 41 },
-                                { depth: '100%', pct: 18 },
-                            ].map(s => (
-                                <div key={s.depth}>
-                                    <div className="flex justify-between mb-1">
-                                        <span className="text-xs text-white/60">Reached {s.depth}</span>
-                                        <span className="text-xs font-bold text-white">{s.pct}% of visitors</span>
-                                    </div>
-                                    <div className="h-3 bg-white/5 rounded-full overflow-hidden">
-                                        <div className="h-full rounded-full bg-gradient-to-r from-[#0D9488] to-[#4F46E5]" style={{ width: `${s.pct}%` }} />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="mt-6 p-4 rounded-xl bg-[#0D9488]/5 border border-[#0D9488]/10">
-                            <p className="text-xs text-[#0D9488] font-medium mb-1">Insight</p>
-                            <p className="text-[10px] text-white/50">Only 18% of visitors scroll to the bottom. Consider moving CTA higher or adding mid-page engagement elements.</p>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {activeTab === 'live' && (
-                <div className="space-y-6">
-                    <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/5 border border-green-500/10">
-                        <span className="relative flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
-                        </span>
-                        <span className="text-sm font-bold text-green-400">{LIVE_USERS.length} users online right now</span>
                     </div>
                     <div className="p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="text-[10px] text-white/30 uppercase tracking-wider border-b border-white/5">
-                                    <th className="text-left py-3 px-4">Visitor</th>
-                                    <th className="text-left py-3 px-4">Current Page</th>
-                                    <th className="text-left py-3 px-4">Country</th>
-                                    <th className="text-left py-3 px-4">Device</th>
-                                    <th className="text-right py-3 px-4">Duration</th>
-                                    <th className="text-right py-3 px-4">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {LIVE_USERS.map(u => (
-                                    <tr key={u.id} className="border-b border-white/5 hover:bg-white/[0.02]">
-                                        <td className="py-3 px-4">
-                                            <div className="flex items-center gap-2">
-                                                <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" /></span>
-                                                <span className="text-xs text-white/60">Visitor #{u.id}</span>
+                        <h3 className="font-bold text-white mb-4">Referrers</h3>
+                        <div className="space-y-2">
+                            {sources.referrers.length > 0 ? sources.referrers.map((r: any) => (
+                                <div key={r.referrer} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03] border border-white/5">
+                                    <span className="text-xs text-white/60 truncate max-w-[200px]">{r.referrer}</span>
+                                    <span className="text-sm font-bold text-white">{r.count}</span>
+                                </div>
+                            )) : <p className="text-sm text-white/30 text-center py-4">No referrer data yet</p>}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Devices Tab */}
+            {activeTab === 'devices' && devices && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {[
+                        { title: 'Device Type', data: devices.devices, icon: Smartphone, keyName: 'type' },
+                        { title: 'Browser', data: devices.browsers, icon: Globe, keyName: 'name' },
+                        { title: 'Operating System', data: devices.os, icon: Monitor, keyName: 'name' },
+                    ].map(section => (
+                        <div key={section.title} className="p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+                            <div className="flex items-center gap-2 mb-4">
+                                <section.icon className="h-4 w-4 text-[#0D9488]" />
+                                <h3 className="font-bold text-white text-sm">{section.title}</h3>
+                            </div>
+                            <div className="space-y-2">
+                                {section.data.length > 0 ? section.data.map((d: any) => {
+                                    const total = section.data.reduce((s: number, t: any) => s + t.count, 0);
+                                    const pct = total > 0 ? ((d.count / total) * 100).toFixed(1) : '0';
+                                    return (
+                                        <div key={d[section.keyName]} className="space-y-1">
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-white/60 capitalize">{d[section.keyName] || 'Unknown'}</span>
+                                                <span className="text-white font-bold">{d.count} ({pct}%)</span>
                                             </div>
-                                        </td>
-                                        <td className="py-3 px-4 text-xs text-white font-mono">{u.page}</td>
-                                        <td className="py-3 px-4 text-xs text-white/60">{u.country}</td>
-                                        <td className="py-3 px-4 text-xs text-white/60">{u.device}</td>
-                                        <td className="text-right py-3 px-4 text-xs text-white/60">{u.duration}</td>
-                                        <td className="text-right py-3 px-4 text-xs font-bold text-white">{u.actions}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                                <div className="h-full bg-gradient-to-r from-[#0D9488] to-[#0EA5E9] rounded-full" style={{ width: `${pct}%` }} />
+                                            </div>
+                                        </div>
+                                    );
+                                }) : <p className="text-sm text-white/30 text-center py-4">No device data yet</p>}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Geography Tab */}
+            {activeTab === 'geo' && geo && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+                        <h3 className="font-bold text-white mb-4">Countries</h3>
+                        <div className="space-y-2">
+                            {geo.countries.length > 0 ? geo.countries.map((c: any, i: number) => (
+                                <div key={c.name} className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] border border-white/5">
+                                    <span className="text-xs text-white/30 w-5">{i + 1}</span>
+                                    <span className="text-xs text-white/60 flex-1">{c.name}</span>
+                                    <span className="text-sm font-bold text-white">{c.count}</span>
+                                </div>
+                            )) : <p className="text-sm text-white/30 text-center py-4">No geographic data yet</p>}
+                        </div>
+                    </div>
+                    <div className="p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+                        <h3 className="font-bold text-white mb-4">Cities</h3>
+                        <div className="space-y-2">
+                            {geo.cities.length > 0 ? geo.cities.map((c: any, i: number) => (
+                                <div key={c.name} className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] border border-white/5">
+                                    <span className="text-xs text-white/30 w-5">{i + 1}</span>
+                                    <span className="text-xs text-white/60 flex-1">{c.name}</span>
+                                    <span className="text-sm font-bold text-white">{c.count}</span>
+                                </div>
+                            )) : <p className="text-sm text-white/30 text-center py-4">No city data yet</p>}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Sessions Tab */}
+            {activeTab === 'sessions' && (
+                <div className="p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl overflow-x-auto">
+                    <h3 className="font-bold text-white mb-4">Recent Sessions</h3>
+                    <table className="w-full min-w-[800px]">
+                        <thead>
+                            <tr className="text-[10px] text-white/30 uppercase tracking-wider border-b border-white/5">
+                                <th className="text-left py-3 px-3">Device</th>
+                                <th className="text-left py-3 px-3">Browser / OS</th>
+                                <th className="text-left py-3 px-3">Location</th>
+                                <th className="text-left py-3 px-3">Landing Page</th>
+                                <th className="text-center py-3 px-3">Pages</th>
+                                <th className="text-center py-3 px-3">Duration</th>
+                                <th className="text-center py-3 px-3">Bounce</th>
+                                <th className="text-left py-3 px-3">Source</th>
+                                <th className="text-left py-3 px-3">Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {sessions.length > 0 ? sessions.map((s: any) => (
+                                <tr key={s.sessionId} className="border-b border-white/5 hover:bg-white/[0.02]">
+                                    <td className="py-2 px-3 text-xs text-white/60 capitalize">{s.deviceType || '—'}</td>
+                                    <td className="py-2 px-3 text-xs text-white/40">{s.browser} / {s.os}</td>
+                                    <td className="py-2 px-3 text-xs text-white/40">{[s.city, s.country].filter(Boolean).join(', ') || '—'}</td>
+                                    <td className="py-2 px-3 text-xs text-white/60 font-mono truncate max-w-[150px]">{s.landingPage || '/'}</td>
+                                    <td className="py-2 px-3 text-xs text-white font-bold text-center">{s.pageCount}</td>
+                                    <td className="py-2 px-3 text-xs text-white/40 text-center">{s.totalDuration}s</td>
+                                    <td className="py-2 px-3 text-center">
+                                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${s.isBounce ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>
+                                            {s.isBounce ? 'Yes' : 'No'}
+                                        </span>
+                                    </td>
+                                    <td className="py-2 px-3 text-xs text-white/40">{s.utmSource || 'Direct'}</td>
+                                    <td className="py-2 px-3 text-[10px] text-white/30">{new Date(s.entryTime).toLocaleString()}</td>
+                                </tr>
+                            )) : (
+                                <tr><td colSpan={9} className="text-center text-sm text-white/30 py-8">No session data yet. Start tracking to see results.</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {/* Events Tab */}
+            {activeTab === 'events' && (
+                <div className="p-6 rounded-2xl border border-white/[0.06] bg-[rgba(22,32,50,0.5)] backdrop-blur-xl">
+                    <h3 className="font-bold text-white mb-4">Tracked Events</h3>
+                    <div className="space-y-2">
+                        {events.length > 0 ? events.map((e: any) => (
+                            <div key={`${e.name}-${e.category}`} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03] border border-white/5">
+                                <div className="flex items-center gap-3">
+                                    <Zap className="h-3.5 w-3.5 text-[#0D9488]" />
+                                    <div>
+                                        <p className="text-xs font-bold text-white">{e.name}</p>
+                                        <p className="text-[10px] text-white/30">{e.category}</p>
+                                    </div>
+                                </div>
+                                <span className="text-sm font-bold text-white">{e.count}</span>
+                            </div>
+                        )) : <p className="text-sm text-white/30 text-center py-8">No events tracked yet. Use track() in your components to start recording events.</p>}
                     </div>
                 </div>
             )}

@@ -39,7 +39,11 @@ import {
     MousePointer2,
     Copy,
     MousePointerClick,
-    RefreshCcw
+    RefreshCcw,
+    Archive,
+    RotateCcw,
+    ToggleLeft,
+    ToggleRight
 } from 'lucide-react';
 import {
     Dialog,
@@ -318,6 +322,7 @@ const CampaignEditCard = ({
     onUpdate,
     onSave,
     onDelete,
+    onArchive,
     creatives,
     onAddCreative,
     showAlert
@@ -327,6 +332,7 @@ const CampaignEditCard = ({
     onUpdate: (id: string, field: keyof Campaign, val: any) => void,
     onSave: () => void,
     onDelete: (id: string, name: string) => void,
+    onArchive: (id: string, name: string) => void,
     creatives: Creative[],
     onAddCreative: (creative: Creative) => void,
     showAlert: (title: string, message: string, type: any) => void
@@ -503,6 +509,14 @@ const CampaignEditCard = ({
                             title={campaign.is_active ? "Pause Campaign" : "Resume Campaign"}
                         >
                             <Power className="h-5 w-5" />
+                        </button>
+
+                        <button
+                            onClick={() => onArchive(campaign.id, campaign.name)}
+                            className="flex items-center justify-center w-10 h-10 rounded-full text-white/50 hover:text-amber-400 hover:bg-amber-500/10 transition-all"
+                            title="Archive Campaign"
+                        >
+                            <Archive className="h-5 w-5" />
                         </button>
 
                         <button
@@ -784,6 +798,8 @@ export default function DataManagementView({
     onAddCampaign,
     onSaveCampaign,
     onDeleteCampaign,
+    onArchiveCampaign,
+    onRestoreCampaign,
     onAddCreative,
     showAlert,
     onRefreshBrand
@@ -795,6 +811,8 @@ export default function DataManagementView({
     onAddCampaign: (newCampaign: Campaign) => void,
     onSaveCampaign: () => void,
     onDeleteCampaign: (id: string, name: string) => void,
+    onArchiveCampaign: (id: string, name: string) => void,
+    onRestoreCampaign: (id: string, name: string) => void,
     onAddCreative: (creative: Creative) => void,
     showAlert: (title: string, message: string, type: any) => void,
     onRefreshBrand: () => void
@@ -803,6 +821,30 @@ export default function DataManagementView({
     const [isCreating, setIsCreating] = useState(false);
     const [newName, setNewName] = useState('');
     const [newFunnel, setNewFunnel] = useState<'TOP' | 'MID' | 'BOTTOM'>('TOP');
+    const [showArchived, setShowArchived] = useState(false);
+    const [archivedCampaigns, setArchivedCampaigns] = useState<any[]>([]);
+    const [loadingArchived, setLoadingArchived] = useState(false);
+
+    const fetchArchivedCampaigns = async () => {
+        setLoadingArchived(true);
+        try {
+            const res = await fetch(`/api/campaigns?brandId=${brandId}&status=Archive`);
+            if (res.ok) {
+                const data = await res.json();
+                setArchivedCampaigns(data);
+            }
+        } catch {
+            // Silently fail
+        } finally {
+            setLoadingArchived(false);
+        }
+    };
+
+    useEffect(() => {
+        if (showArchived) {
+            fetchArchivedCampaigns();
+        }
+    }, [showArchived]);
 
     const handleCreate = () => {
         if (!newName) return;
@@ -904,11 +946,100 @@ export default function DataManagementView({
                         onUpdate={onUpdateCampaign}
                         onSave={onSaveCampaign}
                         onDelete={onDeleteCampaign}
+                        onArchive={onArchiveCampaign}
                         creatives={creatives}
                         onAddCreative={onAddCreative}
                         showAlert={showAlert}
                     />
                 ))}
+            </div>
+
+            {/* Show Archived Toggle */}
+            <div className="pt-4 border-t border-white/[0.06]">
+                <button
+                    onClick={() => setShowArchived(!showArchived)}
+                    className="flex items-center gap-3 text-sm font-bold text-white/50 hover:text-white/70 transition-colors"
+                >
+                    {showArchived ? (
+                        <ToggleRight className="h-5 w-5 text-[#0D9488]" />
+                    ) : (
+                        <ToggleLeft className="h-5 w-5" />
+                    )}
+                    <span>Show Archived Campaigns</span>
+                </button>
+
+                {showArchived && (
+                    <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                        {loadingArchived ? (
+                            <div className="flex items-center justify-center py-8">
+                                <Loader2 className="h-5 w-5 animate-spin text-[#0D9488]" />
+                            </div>
+                        ) : archivedCampaigns.length === 0 ? (
+                            <div className="text-center py-8 text-white/30 text-sm">
+                                No archived campaigns found.
+                            </div>
+                        ) : (
+                            <div className="bg-white/[0.04] rounded-2xl shadow-sm border border-white/10 overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="bg-white/[0.03] border-b border-white/10">
+                                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-white/50">Campaign</th>
+                                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-white/50">Archived Date</th>
+                                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-white/50">Status</th>
+                                                <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-white/50">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/[0.06]">
+                                            {archivedCampaigns.map((campaign: any) => (
+                                                <tr key={campaign.id} className="hover:bg-white/[0.06] transition-colors">
+                                                    <td className="px-6 py-4">
+                                                        <div className="font-bold text-white text-sm">{campaign.name}</div>
+                                                        <div className="text-[10px] text-white/40 font-mono">{campaign.slug}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="text-xs font-medium text-white/50">
+                                                            {new Date(campaign.updatedAt).toLocaleDateString()}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/10 text-white/50">
+                                                            Archived
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    onRestoreCampaign(campaign.id, campaign.name);
+                                                                    setTimeout(fetchArchivedCampaigns, 500);
+                                                                }}
+                                                                className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/[0.04] border border-white/10 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/20 transition-all"
+                                                                title="Restore to Active"
+                                                            >
+                                                                <RotateCcw className="h-4 w-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    onDeleteCampaign(campaign.id, campaign.name);
+                                                                    setTimeout(fetchArchivedCampaigns, 500);
+                                                                }}
+                                                                className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/[0.04] border border-white/10 text-red-400 hover:bg-red-500/10 hover:border-red-500/20 transition-all"
+                                                                title="Delete Permanently"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div >
     );

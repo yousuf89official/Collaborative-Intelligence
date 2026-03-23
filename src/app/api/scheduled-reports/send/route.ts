@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateBrandSummary, scoreBrand, detectAnomalies, generateBenchmarks } from '@/lib/intelligence';
 import { logActivity } from '@/lib/activity-log';
+import { sendEmail } from '@/lib/email';
 
 /**
  * POST /api/scheduled-reports/send — Process due scheduled reports.
@@ -69,14 +70,12 @@ export async function POST(request: Request) {
                     generatedBy: report.user?.name || 'System',
                 });
 
-                // Send email (using a generic email sending approach)
-                // In production, integrate with SendGrid, Resend, or AWS SES
-                // For now, log the email and mark as sent
-                console.log(`[ScheduledReport] Would send to: ${recipients.join(', ')} for ${report.brand.name}`);
-                console.log(`[ScheduledReport] Subject: ${report.brand.name} — ${summary.headline}`);
-
-                // TODO: Integrate actual email service
-                // await sendEmail({ to: recipients, subject: `${report.brand.name} — ${summary.headline}`, html: emailHtml });
+                // Send email via Resend
+                await sendEmail({
+                    to: recipients,
+                    subject: `${report.brand.name} — ${summary.headline}`,
+                    html: emailHtml,
+                });
 
                 // Calculate next send time
                 const nextSendAt = calculateNextSend(report.frequency, report.dayOfWeek, report.dayOfMonth, report.hour);

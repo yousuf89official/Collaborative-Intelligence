@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     Activity,
     TrendingUp,
@@ -118,8 +118,11 @@ export const DashboardAnalyticsView = ({
             dailyMap[date].clicks += m.clicks || 0;
             dailyMap[date].spend += m.spend || 0;
         });
-        return Object.values(dailyMap).sort((a: any, b: any) => a.date.localeCompare(b.date)).slice(-30);
+        return Object.values(dailyMap).sort((a: any, b: any) => a.date.localeCompare(b.date));
     }, [brandMetrics]);
+
+    const [chartDays, setChartDays] = useState(7);
+    const visibleChartData = useMemo(() => chartData.slice(-chartDays), [chartData, chartDays]);
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-500">
@@ -167,13 +170,33 @@ export const DashboardAnalyticsView = ({
                             <p className="text-xs text-white/40 font-medium">Daily impressions & spend correlation</p>
                         </div>
                         <div className="flex bg-white/[0.06] p-1 rounded-lg">
-                            <button className="px-3 py-1.5 text-[10px] font-black rounded-md bg-white/[0.04] shadow-sm text-[#0D9488] uppercase tracking-wider">7 Days</button>
-                            <button className="px-3 py-1.5 text-[10px] font-black rounded-md text-white/40 hover:text-white/60 uppercase tracking-wider">30 Days</button>
+                            <button
+                                onClick={() => setChartDays(7)}
+                                className={cn(
+                                    "px-3 py-1.5 text-[10px] font-black rounded-md uppercase tracking-wider",
+                                    chartDays === 7
+                                        ? "bg-white/[0.04] shadow-sm text-[#0D9488]"
+                                        : "text-white/40 hover:text-white/60"
+                                )}
+                            >
+                                7 Days
+                            </button>
+                            <button
+                                onClick={() => setChartDays(30)}
+                                className={cn(
+                                    "px-3 py-1.5 text-[10px] font-black rounded-md uppercase tracking-wider",
+                                    chartDays === 30
+                                        ? "bg-white/[0.04] shadow-sm text-[#0D9488]"
+                                        : "text-white/40 hover:text-white/60"
+                                )}
+                            >
+                                30 Days
+                            </button>
                         </div>
                     </div>
                     <div className="h-[320px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartData}>
+                            <AreaChart data={visibleChartData}>
                                 <defs>
                                     <linearGradient id="colorImp" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />

@@ -24,19 +24,13 @@ export const authOptions: NextAuthOptions = {
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
-                if (!credentials?.email || !credentials?.password) {
-                    console.log('[Auth] Missing credentials');
-                    return null;
-                }
-
-                console.log('[Auth] Attempting login for:', credentials.email, '| USE_MOCK_DB:', process.env.USE_MOCK_DB, '| DB_URL prefix:', process.env.DATABASE_URL?.substring(0, 30));
+                if (!credentials?.email || !credentials?.password) return null;
 
                 let user;
                 try {
                     user = await prisma.user.findUnique({
                         where: { email: credentials.email.toLowerCase().trim() }
                     });
-                    console.log('[Auth] User found:', !!user, user?.email, user?.status);
                 } catch (dbErr: any) {
                     console.error('[Auth] DB query failed:', dbErr.message);
                     return null;
