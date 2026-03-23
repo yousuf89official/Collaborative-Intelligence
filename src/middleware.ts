@@ -18,7 +18,7 @@ export function middleware(request: NextRequest) {
     if (!pathname.startsWith('/api/')) {
         response.headers.set(
             'Content-Security-Policy',
-            "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.sandbox.midtrans.com https://app.midtrans.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.midtrans.com https://*.neon.tech; frame-src https://app.sandbox.midtrans.com https://app.midtrans.com;"
+            "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pay.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://pay.google.com https://*.neon.tech; frame-src https://pay.google.com;"
         );
     }
 

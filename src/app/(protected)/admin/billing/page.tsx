@@ -5,7 +5,6 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { CreditCard, TrendingUp, DollarSign, Users, ArrowUpRight, Download, Loader2, RefreshCw, Link2, Copy, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatPrice, detectRegion } from '@/lib/region';
-import { useMidtransSnap } from '@/lib/useMidtransSnap';
 
 interface SubscriptionData {
     id: string;
@@ -56,7 +55,6 @@ export default function BillingPage() {
     const [upgrading, setUpgrading] = useState<string | null>(null);
     const [billingToggle, setBillingToggle] = useState<'monthly' | 'yearly'>('yearly');
     const region = detectRegion();
-    const { pay } = useMidtransSnap();
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -99,24 +97,16 @@ export default function BillingPage() {
                     planSlug,
                     billingCycle: billingToggle,
                     region: region.region,
+                    paymentProvider: 'google_pay',
                 }),
             });
             const data = await res.json();
             if (!res.ok) {
-                toast.error(data.error || 'Failed to initiate payment');
+                toast.error(data.error || 'Failed to process upgrade');
                 return;
             }
-            // Open Midtrans Snap popup
-            const result = await pay(data.token);
-            if (result.status === 'success') {
-                toast.success('Payment successful! Your plan has been upgraded.');
-                fetchData(); // Refresh subscription data
-            } else if (result.status === 'pending') {
-                toast.info('Payment is pending. We\'ll activate your plan once confirmed.');
-            } else if (result.status === 'error') {
-                toast.error('Payment failed. Please try again.');
-            }
-            // 'closed' = user closed popup, do nothing
+            toast.success('Plan upgraded successfully!');
+            fetchData();
         } catch (err) {
             toast.error('Payment error. Please try again.');
         } finally {
@@ -482,7 +472,7 @@ export default function BillingPage() {
                     </div>
 
                     <div className="text-center">
-                        <p className="text-[10px] text-white/20">Payments processed securely by Midtrans. All plans include 100% feature access.</p>
+                        <p className="text-[10px] text-white/20">Payments processed securely via Google Pay. All plans include 100% feature access.</p>
                     </div>
                 </div>
             )}
