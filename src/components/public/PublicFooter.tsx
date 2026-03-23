@@ -18,7 +18,7 @@ const FOOTER_LINKS = {
     Resources: [
         { label: 'Help Center', href: '#' },
         { label: 'API Docs', href: '#' },
-        { label: 'Privacy Policy', href: '#' },
+        { label: 'Privacy Policy', href: '/privacy-policy' },
         { label: 'Terms of Service', href: '#' },
     ],
 };
@@ -40,9 +40,12 @@ export function PublicFooter() {
                         <p className="text-sm text-white/40 leading-relaxed mb-6">
                             Enterprise campaign intelligence platform powering data-driven decisions for global brands and agencies.
                         </p>
-                        <a href="mailto:hello@collaborativeintelligence.com" className="text-sm text-white/40 hover:text-[#0D9488] transition-colors">
-                            hello@collaborativeintelligence.com
-                        </a>
+                        <p className="text-sm font-medium text-yellow-400/90 leading-snug">
+                            Product by Integrated Media Marketing
+                        </p>
+                        <p className="text-sm font-semibold text-yellow-400 mt-0.5">
+                            PT STIMULATE GLOBAL MEDIA
+                        </p>
                     </div>
 
                     {Object.entries(FOOTER_LINKS).map(([category, links]) => (
