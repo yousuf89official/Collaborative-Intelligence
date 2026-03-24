@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
 import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 import { ChatbotWidget } from './ChatbotWidget';
+import { HeroDashboardPreview } from './HeroDashboardPreview';
 
 // ─── Animation Variants ─────────────────────────────────────────────────────
 
@@ -295,54 +296,8 @@ export function HomePage() {
                                         </div>
                                     </div>
                                 </div>
-                                {/* Dashboard Mock */}
-                                <div className="aspect-[16/9] bg-[#0d0d12] p-6 grid grid-cols-12 gap-3">
-                                    {/* Sidebar */}
-                                    <div className="col-span-2 space-y-3">
-                                        <div className="h-8 bg-white/5 rounded-lg" />
-                                        <div className="space-y-1.5">
-                                            {[1,2,3,4,5].map(i => (
-                                                <div key={i} className={`h-7 rounded-md ${i === 1 ? 'bg-[#0D9488]/20 border border-[#0D9488]/30' : 'bg-white/3'}`} />
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Main content */}
-                                    <div className="col-span-7 space-y-3">
-                                        <div className="grid grid-cols-4 gap-2">
-                                            {[1,2,3,4].map(i => (
-                                                <div key={i} className="h-16 bg-white/5 rounded-lg border border-white/5 p-2">
-                                                    <div className="h-2 w-8 bg-white/10 rounded mb-1.5" />
-                                                    <div className="h-4 w-12 bg-[#0D9488]/20 rounded" />
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="h-40 bg-white/5 rounded-lg border border-white/5 p-3">
-                                            <div className="h-2 w-20 bg-white/10 rounded mb-3" />
-                                            <div className="flex items-end gap-1 h-24">
-                                                {[40,60,35,80,55,70,45,90,65,75,50,85].map((h, i) => (
-                                                    <div key={i} className="flex-1 rounded-t" style={{ height: `${h}%`, background: i === 7 ? '#0D9488' : 'rgba(255,255,255,0.08)' }} />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {/* Right panel */}
-                                    <div className="col-span-3 space-y-3">
-                                        <div className="h-28 bg-white/5 rounded-lg border border-white/5 p-3">
-                                            <div className="h-2 w-16 bg-white/10 rounded mb-2" />
-                                            <div className="w-16 h-16 mx-auto rounded-full border-4 border-[#0D9488]/30 border-t-[#0D9488]" />
-                                        </div>
-                                        <div className="h-28 bg-white/5 rounded-lg border border-white/5 p-3">
-                                            <div className="h-2 w-16 bg-white/10 rounded mb-3" />
-                                            <div className="space-y-2">
-                                                {[70,55,40].map((w, i) => (
-                                                    <div key={i} className="h-3 bg-white/5 rounded-full overflow-hidden">
-                                                        <div className="h-full rounded-full bg-gradient-to-r from-[#0D9488] to-[#6929C4]" style={{ width: `${w}%` }} />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                {/* Interactive Dashboard Preview */}
+                                <HeroDashboardPreview />
                             </div>
                         </div>
                     </motion.div>
