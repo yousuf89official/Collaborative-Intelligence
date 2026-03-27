@@ -124,14 +124,13 @@ function BarChart() {
             {CHART_DATA.map((d, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
                     <div
-                        className="w-full rounded-t-[2px] transition-all duration-75 relative"
+                        className="w-full rounded-t-[2px] relative"
                         style={{
                             height: `${heights[i]}%`,
                             background: i === active
                                 ? 'linear-gradient(to top, #0D9488, #0ea5e9)'
                                 : 'rgba(255,255,255,0.07)',
-                            transition: heights[i] === 0 ? 'none' : 'height 1s cubic-bezier(0.34,1.56,0.64,1), background 0.4s ease',
-                            transitionDelay: `${i * 50}ms`,
+                            transition: heights[i] === 0 ? 'none' : `height 1s cubic-bezier(0.34,1.56,0.64,1) ${i * 50}ms, background 0.4s ease ${i * 50}ms`,
                             boxShadow: i === active ? '0 0 8px rgba(13,148,136,0.4)' : 'none',
                         }}
                     />
