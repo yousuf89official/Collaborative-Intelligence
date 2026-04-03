@@ -1,9 +1,31 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+// ─── Master Admin (protected — never remove) ────────────────────────────────
+const MASTER_ADMIN = {
+    email: 'yousuf@wearecollaborative.net',
+    name: 'Yousuf Noor',
+    role: 'masteradmin',
+    status: 'Active',
+};
+
+async function ensureMasterAdmin() {
+    const hash = await bcrypt.hash('admin123', 12);
+    await prisma.user.upsert({
+        where: { email: MASTER_ADMIN.email },
+        update: { role: MASTER_ADMIN.role, status: MASTER_ADMIN.status },
+        create: { ...MASTER_ADMIN, password: hash },
+    });
+    console.log('🔐 Master admin ensured:', MASTER_ADMIN.email);
+}
+
 async function main() {
     console.log('🌱 Starting seed...');
+
+    // Always ensure master admin exists first
+    await ensureMasterAdmin();
 
     // 0. Clean up (Optional, but good for idempotent runs if uniqueness constraints hit)
     // await prisma.subCampaign.deleteMany();

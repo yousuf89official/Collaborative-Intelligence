@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "dev:local": "USE_MOCK_DB=true next dev",
+    "dev:mock": "USE_MOCK_DB=true next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -90,6 +90,7 @@
     "prisma": "^6.19.1",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.46.4"
+    "typescript-eslint": "^8.46.4",
+    "vercel": "^50.37.1"
   }
 }

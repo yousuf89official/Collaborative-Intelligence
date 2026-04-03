@@ -7,9 +7,13 @@ import bcrypt from "bcryptjs";
 
 // Fire-and-forget activity log (no await needed in authorize)
 function logAuth(userName: string, email: string, action: string, detail: string, severity: string = 'info') {
-    prisma.activityLog.create({
-        data: { userName, userEmail: email, action, target: 'Authentication', detail, severity }
-    }).catch(() => {});
+    try {
+        prisma.activityLog.create({
+            data: { userName, userEmail: email, action, target: 'Authentication', detail, severity }
+        }).catch(() => {});
+    } catch {
+        // Silently ignore if activityLog model is unavailable (e.g. mock DB)
+    }
 }
 
 // Dummy hash to compare against when user doesn't exist (prevents timing attacks)

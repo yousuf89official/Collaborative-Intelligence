@@ -14,19 +14,32 @@ export async function GET() {
         });
 
         // Aggregate metrics
-        const metrics = await prisma.metric.aggregate({
-            _sum: {
-                spend: true,
-                impressions: true,
-                clicks: true,
-                reach: true,
-                engagement: true,
-            }
-        });
+        let totalSpend = 0;
+        let totalImpressions = 0;
+        let totalClicks = 0;
 
-        const totalSpend = metrics._sum.spend || 0;
-        const totalImpressions = metrics._sum.impressions || 0;
-        const totalClicks = metrics._sum.clicks || 0;
+        try {
+            const metrics = await prisma.metric.aggregate({
+                _sum: {
+                    spend: true,
+                    impressions: true,
+                    clicks: true,
+                    reach: true,
+                    engagement: true,
+                }
+            });
+            totalSpend = metrics._sum?.spend || 0;
+            totalImpressions = metrics._sum?.impressions || 0;
+            totalClicks = metrics._sum?.clicks || 0;
+        } catch {
+            // aggregate not supported (mock DB) — fall back to manual sum
+            const allMetrics = await prisma.metric.findMany({});
+            for (const m of allMetrics) {
+                totalSpend += Number(m.spend) || 0;
+                totalImpressions += Number(m.impressions) || 0;
+                totalClicks += Number(m.clicks) || 0;
+            }
+        }
 
         // Calculate ROAS (if spend > 0, use clicks as proxy for conversions)
         const avgRoas = totalSpend > 0 ? Math.round((totalClicks / totalSpend) * 100) / 100 : 0;
@@ -38,7 +51,7 @@ export async function GET() {
             avgRoas,
         });
     } catch (err: any) {
-        console.error('Dashboard stats error:', err);
+        console.error('Dashboard stats error:', err?.message || err);
 
         // Neon cold start — return zeros instead of 500
         if (err?.code === 'P1001') {

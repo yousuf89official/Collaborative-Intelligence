@@ -536,8 +536,14 @@ class MockModelDelegate {
             throw new Error(`[MockDB] Record not found in "${this.modelName}" for update. Where: ${JSON.stringify(args.where)}`);
         }
 
-        // Merge update data
-        Object.assign(record, args.data);
+        // Protect master admin — cannot change critical fields
+        if (record.protected) {
+            const { email, password, role, status, protected: _p, ...safeData } = args.data;
+            Object.assign(record, safeData);
+        } else {
+            // Merge update data
+            Object.assign(record, args.data);
+        }
 
         // Auto-update timestamp
         const schema = SCHEMAS[this.modelName];
@@ -555,17 +561,20 @@ class MockModelDelegate {
         if (!record) {
             throw new Error(`[MockDB] Record not found in "${this.modelName}" for delete. Where: ${JSON.stringify(args.where)}`);
         }
+        if (record.protected) {
+            throw new Error(`[MockDB] Cannot delete protected record "${record.email || record.id}"`);
+        }
         this.store.removeWhere(this.modelName, r => r === record);
         return safeClone(record);
     }
 
     async deleteMany(args?: { where?: any }): Promise<{ count: number }> {
         if (!args?.where) {
-            const count = this.store.getAll(this.modelName).length;
-            this.store.removeWhere(this.modelName, () => true);
+            const count = this.store.getAll(this.modelName).filter(r => !r.protected).length;
+            this.store.removeWhere(this.modelName, r => !r.protected);
             return { count };
         }
-        const count = this.store.removeWhere(this.modelName, r => matchesWhere(r, args.where));
+        const count = this.store.removeWhere(this.modelName, r => matchesWhere(r, args.where) && !r.protected);
         return { count };
     }
 
@@ -581,6 +590,105 @@ class MockModelDelegate {
         let records = this.store.getAll(this.modelName);
         if (args?.where) records = records.filter(r => matchesWhere(r, args.where));
         return records.length;
+    }
+
+    async aggregate(args?: { where?: any; _sum?: any; _avg?: any; _min?: any; _max?: any; _count?: any }): Promise<any> {
+        let records = this.store.getAll(this.modelName);
+        if (args?.where) records = records.filter(r => matchesWhere(r, args.where));
+
+        const result: any = {};
+
+        if (args?._sum) {
+            result._sum = {};
+            for (const field of Object.keys(args._sum)) {
+                if (args._sum[field]) {
+                    result._sum[field] = records.reduce((sum, r) => sum + (Number(r[field]) || 0), 0);
+                }
+            }
+        }
+
+        if (args?._avg) {
+            result._avg = {};
+            for (const field of Object.keys(args._avg)) {
+                if (args._avg[field]) {
+                    const vals = records.map(r => Number(r[field])).filter(v => !isNaN(v));
+                    result._avg[field] = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+                }
+            }
+        }
+
+        if (args?._min) {
+            result._min = {};
+            for (const field of Object.keys(args._min)) {
+                if (args._min[field]) {
+                    const vals = records.map(r => r[field]).filter(v => v != null);
+                    result._min[field] = vals.length > 0 ? Math.min(...vals.map(Number)) : null;
+                }
+            }
+        }
+
+        if (args?._max) {
+            result._max = {};
+            for (const field of Object.keys(args._max)) {
+                if (args._max[field]) {
+                    const vals = records.map(r => r[field]).filter(v => v != null);
+                    result._max[field] = vals.length > 0 ? Math.max(...vals.map(Number)) : null;
+                }
+            }
+        }
+
+        if (args?._count) {
+            result._count = typeof args._count === 'boolean' ? records.length : {};
+            if (typeof args._count === 'object') {
+                for (const field of Object.keys(args._count)) {
+                    if (args._count[field]) {
+                        result._count[field] = records.filter(r => r[field] != null).length;
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    async groupBy(args: { by: string[]; where?: any; _sum?: any; _count?: any; _avg?: any; orderBy?: any }): Promise<any[]> {
+        let records = this.store.getAll(this.modelName);
+        if (args.where) records = records.filter(r => matchesWhere(r, args.where));
+
+        const groups = new Map<string, any[]>();
+        for (const record of records) {
+            const key = args.by.map(f => String(record[f] ?? 'null')).join('|');
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key)!.push(record);
+        }
+
+        return Array.from(groups.entries()).map(([, groupRecords]) => {
+            const row: any = {};
+            for (const field of args.by) {
+                row[field] = groupRecords[0][field];
+            }
+            if (args._count) {
+                row._count = typeof args._count === 'boolean'
+                    ? groupRecords.length
+                    : Object.fromEntries(Object.keys(args._count).map(f => [f, groupRecords.filter(r => r[f] != null).length]));
+            }
+            if (args._sum) {
+                row._sum = {};
+                for (const f of Object.keys(args._sum)) {
+                    if (args._sum[f]) row._sum[f] = groupRecords.reduce((s, r) => s + (Number(r[f]) || 0), 0);
+                }
+            }
+            if (args._avg) {
+                row._avg = {};
+                for (const f of Object.keys(args._avg)) {
+                    if (args._avg[f]) {
+                        const vals = groupRecords.map(r => Number(r[f])).filter(v => !isNaN(v));
+                        row._avg[f] = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+                    }
+                }
+            }
+            return row;
+        });
     }
 }
 
@@ -681,36 +789,42 @@ function handleRawQuery(sql: string, store: MockStore, params: any[]): any[] {
 // ─── Mock Prisma Client ──────────────────────────────────────────────────────
 
 class MockPrismaClient {
-    private store: MockStore;
+    _store: MockStore;
 
     constructor() {
-        this.store = new MockStore(SEED_DATA);
+        this._store = new MockStore(SEED_DATA);
         console.log('[MockDB] In-memory database active with seed data');
     }
 
     // Model delegates
-    get user() { return new MockModelDelegate('user', this.store); }
-    get userBrand() { return new MockModelDelegate('userBrand', this.store); }
-    get brand() { return new MockModelDelegate('brand', this.store); }
-    get industry() { return new MockModelDelegate('industry', this.store); }
-    get industrySubType() { return new MockModelDelegate('industrySubType', this.store); }
-    get campaign() { return new MockModelDelegate('campaign', this.store); }
-    get subCampaign() { return new MockModelDelegate('subCampaign', this.store); }
-    get platform() { return new MockModelDelegate('platform', this.store); }
-    get channel() { return new MockModelDelegate('channel', this.store); }
-    get campaignChannel() { return new MockModelDelegate('campaignChannel', this.store); }
-    get subCampaignChannel() { return new MockModelDelegate('subCampaignChannel', this.store); }
-    get integration() { return new MockModelDelegate('integration', this.store); }
-    get metric() { return new MockModelDelegate('metric', this.store); }
-    get shareLink() { return new MockModelDelegate('shareLink', this.store); }
-    get invoice() { return new MockModelDelegate('invoice', this.store); }
-    get igExtraction() { return new MockModelDelegate('igExtraction', this.store); }
-    get ttExtraction() { return new MockModelDelegate('ttExtraction', this.store); }
-    get appConfig() { return new MockModelDelegate('appConfig', this.store); }
+    get user() { return new MockModelDelegate('user', this._store); }
+    get userBrand() { return new MockModelDelegate('userBrand', this._store); }
+    get brand() { return new MockModelDelegate('brand', this._store); }
+    get industry() { return new MockModelDelegate('industry', this._store); }
+    get industrySubType() { return new MockModelDelegate('industrySubType', this._store); }
+    get campaign() { return new MockModelDelegate('campaign', this._store); }
+    get subCampaign() { return new MockModelDelegate('subCampaign', this._store); }
+    get platform() { return new MockModelDelegate('platform', this._store); }
+    get channel() { return new MockModelDelegate('channel', this._store); }
+    get campaignChannel() { return new MockModelDelegate('campaignChannel', this._store); }
+    get subCampaignChannel() { return new MockModelDelegate('subCampaignChannel', this._store); }
+    get integration() { return new MockModelDelegate('integration', this._store); }
+    get metric() { return new MockModelDelegate('metric', this._store); }
+    get shareLink() { return new MockModelDelegate('shareLink', this._store); }
+    get invoice() { return new MockModelDelegate('invoice', this._store); }
+    get igExtraction() { return new MockModelDelegate('igExtraction', this._store); }
+    get ttExtraction() { return new MockModelDelegate('ttExtraction', this._store); }
+    get appConfig() { return new MockModelDelegate('appConfig', this._store); }
+    get activityLog() { return new MockModelDelegate('activityLog', this._store); }
+    get apiKey() { return new MockModelDelegate('apiKey', this._store); }
+    get scheduledReport() { return new MockModelDelegate('scheduledReport', this._store); }
+    get whitelabelDomain() { return new MockModelDelegate('whitelabelDomain', this._store); }
+    get campaignIntegration() { return new MockModelDelegate('campaignIntegration', this._store); }
+    get creative() { return new MockModelDelegate('creative', this._store); }
 
     // Raw SQL
     async $queryRawUnsafe(sql: string, ...params: any[]): Promise<any[]> {
-        return handleRawQuery(sql, this.store, params);
+        return handleRawQuery(sql, this._store, params);
     }
 
     // Transaction — execute function with self as the "transaction client"
@@ -732,6 +846,17 @@ class MockPrismaClient {
 
 // ─── Factory ─────────────────────────────────────────────────────────────────
 
-export function createMockPrisma(): MockPrismaClient {
-    return new MockPrismaClient();
+export function createMockPrisma(): any {
+    const client = new MockPrismaClient();
+    // Proxy: any unknown model returns a no-op delegate so missing models don't crash
+    return new Proxy(client, {
+        get(target: any, prop: string) {
+            if (prop in target) return target[prop];
+            // Return a delegate that operates on an empty table for any unknown model
+            if (typeof prop === 'string' && prop[0] === prop[0].toLowerCase() && prop[0] !== '$' && prop[0] !== '_') {
+                return new MockModelDelegate(prop, target._store);
+            }
+            return undefined;
+        }
+    });
 }

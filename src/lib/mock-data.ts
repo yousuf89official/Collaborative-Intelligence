@@ -58,6 +58,17 @@ const now = new Date();
 
 const users = [
     {
+        id: 'usr_master_000',
+        email: 'yousuf@wearecollaborative.net',
+        password: ADMIN_HASH,
+        name: 'Yousuf Noor',
+        role: 'masteradmin',
+        status: 'Active',
+        protected: true,
+        createdAt: d('2025-01-01T00:00:00Z'),
+        updatedAt: d('2025-01-01T00:00:00Z'),
+    },
+    {
         id: 'usr_admin_001',
         email: 'admin@collaborativeintelligence.io',
         password: ADMIN_HASH,

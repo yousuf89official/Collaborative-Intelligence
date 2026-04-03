@@ -22,6 +22,7 @@ export const ALL_FEATURES: Feature[] = [
     { key: 'brand-identity', label: 'Brand Identity', section: 'Public Site', href: '/admin/brand-identity' },
     { key: 'chatbot', label: 'AI Chatbot', section: 'Public Site', href: '/admin/chatbot' },
     // Growth & Revenue
+    { key: 'future-products', label: 'Future Products', section: 'Growth & Revenue', href: '/admin/future-products' },
     { key: 'analytics', label: 'Analytics & Tracking', section: 'Growth & Revenue', href: '/admin/analytics' },
     { key: 'whitelabel', label: 'Whitelabel System', section: 'Growth & Revenue', href: '/admin/whitelabel' },
     { key: 'billing', label: 'Billing & Referrals', section: 'Growth & Revenue', href: '/admin/billing' },
@@ -63,7 +64,7 @@ export function hasFeatureAccess(
     featureKey: string
 ): boolean {
     // Super admins always have full access
-    if (['super_admin', 'MasterAdmin'].includes(role)) return true;
+    if (['super_admin', 'MasterAdmin', 'masteradmin'].includes(role)) return true;
 
     const permissions = parsePermissions(permissionsJson);
     // If no permissions set, allow all (default for existing users)

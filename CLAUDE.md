@@ -14,31 +14,33 @@ Enterprise campaign intelligence platform — unified analytics across Google Ad
 
 | Environment | Branch | Database | How to run |
 |-------------|--------|----------|------------|
-| **Local** | any | Mock DB (in-memory) | `npm run dev:local` |
-| **Staging** | `staging` | Neon Postgres (staging branch) | Push to `staging` → Vercel Preview |
-| **Production** | `main` | Neon Postgres (production) | Merge to `main` → Vercel Production |
+| **Local** | any | Neon Postgres (`local` branch) | `npm run dev` |
+| **Local (mock)** | any | Mock DB (in-memory) | `npm run dev:mock` |
+| **Staging** | `staging` | Neon Postgres (`staging` branch) | `npx vercel` (manual) |
+| **Production** | `main` | Neon Postgres (`production` branch) | `npx vercel --prod` (manual) |
 
 ### Local Development
 
 ```bash
-npm run dev:local          # Starts with mock DB (no Postgres needed)
+npm run dev                # Starts with Neon local branch (real Postgres)
+npm run dev:mock           # Starts with mock DB (no Postgres needed)
 ```
 
-Login: `admin@collaborativeintelligence.io` / `admin123`
+Master login: `yousuf@wearecollaborative.net` / `admin123` (protected — cannot be deleted or demoted)
 
 Mock DB is defined in `src/lib/mock-db.ts` with seed data in `src/lib/mock-data.ts`.
 
 ### Staging
 
 - Branch: `staging`
-- Auto-deploys to Vercel Preview URL on push
+- **Manual deploy**: `npx vercel` (from staging branch)
 - Uses separate Neon database branch
 - Env vars scoped as "Preview" in Vercel dashboard
 
 ### Production
 
 - Branch: `main`
-- Auto-deploys to Vercel Production on merge
+- **Manual deploy**: `npx vercel --prod` (from main branch)
 - Uses main Neon database
 - Env vars scoped as "Production" in Vercel dashboard
 - Cron jobs (`/api/sync`, `/api/scheduled-reports/send`) only run in production
@@ -81,3 +83,28 @@ NODE_OPTIONS="--max-old-space-size=4096" npm run build   # Local builds need ext
 ```
 
 Vercel handles memory automatically during deployment.
+
+<!-- VERCEL BEST PRACTICES START -->
+## Best practices for developing on Vercel
+
+These defaults are optimized for AI coding agents (and humans) working on apps that deploy to Vercel.
+
+- Treat Vercel Functions as stateless + ephemeral (no durable RAM/FS, no background daemons), use Blob or marketplace integrations for preserving state
+- Edge Functions (standalone) are deprecated; prefer Vercel Functions
+- Don't start new projects on Vercel KV/Postgres (both discontinued); use Marketplace Redis/Postgres instead
+- Store secrets in Vercel Env Variables; not in git or `NEXT_PUBLIC_*`
+- Provision Marketplace native integrations with `vercel integration add` (CI/agent-friendly)
+- Sync env + project settings with `vercel env pull` / `vercel pull` when you need local/offline parity
+- Use `waitUntil` for post-response work; avoid the deprecated Function `context` parameter
+- Set Function regions near your primary data source; avoid cross-region DB/service roundtrips
+- Tune Fluid Compute knobs (e.g., `maxDuration`, memory/CPU) for long I/O-heavy calls (LLMs, APIs)
+- Use Runtime Cache for fast **regional** caching + tag invalidation (don't treat it as global KV)
+- Use Cron Jobs for schedules; cron runs in UTC and triggers your production URL via HTTP GET
+- Use Vercel Blob for uploads/media; Use Edge Config for small, globally-read config
+- If Enable Deployment Protection is enabled, use a bypass secret to directly access them
+- Add OpenTelemetry via `@vercel/otel` on Node; don't expect OTEL support on the Edge runtime
+- Enable Web Analytics + Speed Insights early
+- Use AI Gateway for model routing, set AI_GATEWAY_API_KEY, using a model string (e.g. 'anthropic/claude-sonnet-4.6'), Gateway is already default in AI SDK
+  needed. Always curl https://ai-gateway.vercel.sh/v1/models first; never trust model IDs from memory
+- For durable agent loops or untrusted code: use Workflow (pause/resume/state) + Sandbox; use Vercel MCP for secure infra access
+<!-- VERCEL BEST PRACTICES END -->
