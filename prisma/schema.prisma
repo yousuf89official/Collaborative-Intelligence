@@ -75,6 +75,7 @@ model Brand {
   users             UserBrand[]
   scheduledReports  ScheduledReport[]
   creatives         Creative[]
+  campaignTemplates CampaignTemplate[]
 }
 
 model Industry {
@@ -97,24 +98,26 @@ model IndustrySubType {
 }
 
 model Campaign {
-  id            String            @id @default(cuid())
-  name          String
-  slug          String
-  description   String?
-  startDate     DateTime?
-  endDate       DateTime?
-  budgetPlanned Float             @default(0)
-  currency      String?
-  timezone      String            @default("UTC")
-  status        String            @default("Active")
-  brandId       String
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  brand         Brand             @relation(fields: [brandId], references: [id])
-  channels      CampaignChannel[]
-  metrics       Metric[]
-  subCampaigns  SubCampaign[]
+  id             String            @id @default(cuid())
+  name           String
+  slug           String
+  description    String?
+  startDate      DateTime?
+  endDate        DateTime?
+  budgetPlanned  Float             @default(0)
+  currency       String?
+  timezone       String            @default("UTC")
+  status         String            @default("Active")
+  approvalStatus String            @default("draft")
+  brandId        String
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  brand          Brand             @relation(fields: [brandId], references: [id])
+  channels       CampaignChannel[]
+  metrics        Metric[]
+  subCampaigns   SubCampaign[]
   integrationLinks CampaignIntegration[]
+  comments       CampaignComment[]
 }
 
 model SubCampaign {
@@ -733,4 +736,32 @@ model TtExtraction {
   @@index([username])
   @@index([userId])
   @@index([createdAt(sort: Desc)], map: "tt_extraction_created_at_desc")
+}
+
+// ─── Campaign Templates ─────────────────────────────────────────────────────
+model CampaignTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  brandId     String?
+  brand       Brand?   @relation(fields: [brandId], references: [id])
+  structure   String   // JSON: { channels, subCampaigns, budgetSplits }
+  isGlobal    Boolean  @default(false)
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([brandId])
+}
+
+// ─── Campaign Comments ──────────────────────────────────────────────────────
+model CampaignComment {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  userId     String
+  userName   String
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([campaignId, createdAt(sort: Desc)])
 }

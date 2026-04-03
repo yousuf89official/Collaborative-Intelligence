@@ -356,7 +356,17 @@ export const api = {
         createSubCampaign: (data: any) => fetchClient<Campaign>('/campaigns/sub', {
             method: 'POST',
             body: JSON.stringify(data)
-        })
+        }),
+        clone: (id: string) => fetchClient<Campaign>(`/campaigns/${id}/clone`, { method: 'POST' }),
+        getComments: (id: string) => fetchClient<any[]>(`/campaigns/${id}/comments`),
+        addComment: (id: string, content: string) => fetchClient<any>(`/campaigns/${id}/comments`, { method: 'POST', body: JSON.stringify({ content }) }),
+        updateStatus: (id: string, status: string) => fetchClient<Campaign>(`/campaigns/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+        bulkAction: (action: string, campaignIds: string[]) => fetchClient<any>(`/campaigns/bulk`, { method: 'POST', body: JSON.stringify({ action, campaignIds }) }),
+    },
+
+    campaignTemplates: {
+        ...createCrudApi<any>('campaign-templates'),
+        createFromTemplate: (data: { templateId: string; brandId: string; name: string }) => fetchClient<Campaign>('/campaigns/from-template', { method: 'POST', body: JSON.stringify(data) }),
     },
 
     platforms: createCrudApi<Platform>('platforms'),
