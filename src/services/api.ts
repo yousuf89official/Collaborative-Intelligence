@@ -362,11 +362,30 @@ export const api = {
         addComment: (id: string, content: string) => fetchClient<any>(`/campaigns/${id}/comments`, { method: 'POST', body: JSON.stringify({ content }) }),
         updateStatus: (id: string, status: string) => fetchClient<Campaign>(`/campaigns/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
         bulkAction: (action: string, campaignIds: string[]) => fetchClient<any>(`/campaigns/bulk`, { method: 'POST', body: JSON.stringify({ action, campaignIds }) }),
+        // Budget Intelligence
+        getPacing: (id: string) => fetchClient<any>(`/campaigns/${id}/pacing`),
+        getBudget: (id: string) => fetchClient<any[]>(`/campaigns/${id}/budget`),
+        addBudgetAllocation: (id: string, data: any) => fetchClient<any>(`/campaigns/${id}/budget`, { method: 'POST', body: JSON.stringify(data) }),
+        getAlerts: (id: string) => fetchClient<any[]>(`/campaigns/${id}/alerts`),
+        addAlert: (id: string, data: any) => fetchClient<any>(`/campaigns/${id}/alerts`, { method: 'POST', body: JSON.stringify(data) }),
+        toggleAlert: (id: string, alertId: string, isActive: boolean) => fetchClient<any>(`/campaigns/${id}/alerts`, { method: 'PUT', body: JSON.stringify({ alertId, isActive }) }),
     },
 
     campaignTemplates: {
         ...createCrudApi<any>('campaign-templates'),
         createFromTemplate: (data: { templateId: string; brandId: string; name: string }) => fetchClient<Campaign>('/campaigns/from-template', { method: 'POST', body: JSON.stringify(data) }),
+    },
+
+    campaignRules: {
+        getAll: (campaignId?: string) => {
+            const qs = campaignId ? `?campaignId=${campaignId}` : '';
+            return fetchClient<any[]>(`/campaign-rules${qs}`);
+        },
+        getById: (id: string) => fetchClient<any>(`/campaign-rules/${id}`),
+        create: (data: any) => fetchClient<any>('/campaign-rules', { method: 'POST', body: JSON.stringify(data) }),
+        update: (id: string, data: any) => fetchClient<any>(`/campaign-rules/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+        delete: (id: string) => fetchClient<any>(`/campaign-rules/${id}`, { method: 'DELETE' }),
+        evaluate: () => fetchClient<any>('/campaign-rules/evaluate', { method: 'POST' }),
     },
 
     platforms: createCrudApi<Platform>('platforms'),

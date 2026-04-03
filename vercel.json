@@ -10,6 +10,14 @@
     {
       "path": "/api/scheduled-reports/send",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/campaigns/evaluate-alerts",
+      "schedule": "0 */4 * * *"
+    },
+    {
+      "path": "/api/campaign-rules/evaluate",
+      "schedule": "0 * * * *"
     }
   ]
 }

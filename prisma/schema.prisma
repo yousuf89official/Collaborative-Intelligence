@@ -117,7 +117,10 @@ model Campaign {
   metrics        Metric[]
   subCampaigns   SubCampaign[]
   integrationLinks CampaignIntegration[]
-  comments       CampaignComment[]
+  comments          CampaignComment[]
+  budgetAllocations BudgetAllocation[]
+  alerts            CampaignAlert[]
+  rules             CampaignRule[]
 }
 
 model SubCampaign {
@@ -764,4 +767,71 @@ model CampaignComment {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   @@index([campaignId, createdAt(sort: Desc)])
+}
+
+// ─── Budget Allocations ─────────────────────────────────────────────────────
+model BudgetAllocation {
+  id            String   @id @default(cuid())
+  campaignId    String
+  campaign      Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  subCampaignId String?
+  label         String?
+  amount        Float
+  percentage    Float?
+  period        String   @default("monthly")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  @@index([campaignId])
+}
+
+// ─── Campaign Alerts ────────────────────────────────────────────────────────
+model CampaignAlert {
+  id              String    @id @default(cuid())
+  campaignId      String
+  campaign        Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  type            String
+  metric          String
+  operator        String
+  threshold       Float
+  isActive        Boolean   @default(true)
+  lastTriggeredAt DateTime?
+  createdBy       String
+  createdAt       DateTime  @default(now())
+  @@index([campaignId])
+  @@index([isActive, lastTriggeredAt])
+}
+
+// ─── Campaign Rules Engine ──────────────────────────────────────────────────
+model CampaignRule {
+  id              String          @id @default(cuid())
+  campaignId      String
+  campaign        Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  name            String
+  description     String?
+  isActive        Boolean         @default(true)
+  condition       String
+  action          String
+  frequency       String          @default("daily")
+  consecutiveHits Int             @default(1)
+  currentHits     Int             @default(0)
+  lastEvaluatedAt DateTime?
+  lastTriggeredAt DateTime?
+  createdBy       String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  executions      RuleExecution[]
+  @@index([campaignId])
+  @@index([isActive, frequency])
+}
+
+model RuleExecution {
+  id          String       @id @default(cuid())
+  ruleId      String
+  rule        CampaignRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  matched     Boolean
+  metricVal   Float?
+  actionTaken String?
+  error       String?
+  createdAt   DateTime     @default(now())
+  @@index([ruleId, createdAt(sort: Desc)])
 }

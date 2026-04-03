@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
         const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Math.random().toString(36).substring(2, 6);
 
-        const campaign = await prisma.$transaction(async (tx) => {
+        const campaign = await prisma.$transaction(async (tx: any) => {
             const budgetPlanned = structure.budgetSplits?.total
                 ? parseFloat(structure.budgetSplits.total)
                 : 0;

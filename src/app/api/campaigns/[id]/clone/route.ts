@@ -23,7 +23,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         const newName = `${original.name} (Copy)`;
         const slug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Math.random().toString(36).substring(2, 6);
 
-        const newCampaign = await prisma.$transaction(async (tx) => {
+        const newCampaign = await prisma.$transaction(async (tx: any) => {
             const campaign = await tx.campaign.create({
                 data: {
                     name: newName,
