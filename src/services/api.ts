@@ -453,6 +453,32 @@ export const api = {
                 body: JSON.stringify({ brandId, customerId, accountName })
             }),
         },
+        metaAds: {
+            getAuthUrl: (brandId: string) => fetchClient<{ url: string }>(`/integrations/meta-ads/auth?brandId=${brandId}`),
+            getStatus: (brandId: string) => fetchClient<{ connected: boolean, hasPending?: boolean, accounts?: any[] }>(`/integrations/meta-ads/status?brandId=${brandId}`),
+            exchangeCode: (code: string, brandId: string) => fetchClient('/integrations/meta-ads/exchange', {
+                method: 'POST',
+                body: JSON.stringify({ code, brandId })
+            }),
+            listAccounts: (brandId: string) => fetchClient<{ accounts: any[] }>(`/integrations/meta-ads/accounts?brandId=${brandId}`),
+            selectAccount: (brandId: string, customerId: string, accountName?: string) => fetchClient('/integrations/meta-ads/select-account', {
+                method: 'POST',
+                body: JSON.stringify({ brandId, customerId, accountName })
+            }),
+        },
+        tiktokAds: {
+            getAuthUrl: (brandId: string) => fetchClient<{ url: string }>(`/integrations/tiktok-ads/auth?brandId=${brandId}`),
+            getStatus: (brandId: string) => fetchClient<{ connected: boolean, hasPending?: boolean, accounts?: any[] }>(`/integrations/tiktok-ads/status?brandId=${brandId}`),
+            exchangeCode: (code: string, brandId: string) => fetchClient('/integrations/tiktok-ads/exchange', {
+                method: 'POST',
+                body: JSON.stringify({ code, brandId })
+            }),
+            listAccounts: (brandId: string) => fetchClient<{ accounts: any[] }>(`/integrations/tiktok-ads/accounts?brandId=${brandId}`),
+            selectAccount: (brandId: string, customerId: string, accountName?: string) => fetchClient('/integrations/tiktok-ads/select-account', {
+                method: 'POST',
+                body: JSON.stringify({ brandId, customerId, accountName })
+            }),
+        },
         disconnect: (id: string) => fetchClient('/integrations/disconnect', {
             method: 'POST',
             body: JSON.stringify({ id })
