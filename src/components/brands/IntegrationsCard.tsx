@@ -93,13 +93,16 @@ export const IntegrationsCard = ({ brandId }: IntegrationsCardProps) => {
             let data;
             if (providerKey === 'google_ads') {
                 const res = await api.integrations.googleAds.getStatus(brandId);
-                // Res structure: { connected, hasPending, accounts: [] }
+                data = { accounts: res.accounts || [], hasPending: res.hasPending };
+            } else if (providerKey === 'meta_ads') {
+                const res = await api.integrations.metaAds.getStatus(brandId);
+                data = { accounts: res.accounts || [], hasPending: res.hasPending };
+            } else if (providerKey === 'tiktok_ads') {
+                const res = await api.integrations.tiktokAds.getStatus(brandId);
                 data = { accounts: res.accounts || [], hasPending: res.hasPending };
             } else {
-                // Generic providers — check via brand integrations table
                 const response = await fetch(`/api/integrations/${providerKey}?brandId=${brandId}`);
                 if (response.status === 404) {
-                    // No dedicated endpoint — skip silently
                     data = { accounts: [] };
                 } else if (!response.ok) {
                     throw new Error(`Status ${response.status}`);
@@ -162,10 +165,84 @@ export const IntegrationsCard = ({ brandId }: IntegrationsCardProps) => {
         }
     };
 
+    // --- Meta Ads Account Selection ---
+    const fetchMetaAccounts = async () => {
+        setIntegrationsData(prev => ({ ...prev, meta_ads: { ...prev.meta_ads!, loading: true } }));
+        try {
+            const res = await api.integrations.metaAds.listAccounts(brandId);
+            setAdAccounts((res.accounts || []).map((a: any) => `${a.account_id}|${a.name}`));
+            setSelectingAccount(true);
+        } catch (e) {
+            toast.error('Failed to fetch Meta Ad accounts');
+        } finally {
+            setIntegrationsData(prev => ({ ...prev, meta_ads: { ...prev.meta_ads!, loading: false } }));
+        }
+    };
+
+    const saveMetaAccount = async () => {
+        if (!selectedAdAccount) return;
+        const [accountId, name] = selectedAdAccount.split('|');
+        try {
+            await api.integrations.metaAds.selectAccount(brandId, accountId, selectedAdAccountName || name || accountId);
+            setSelectingAccount(false);
+            fetchStatus('meta_ads');
+            toast.success('Meta Ads account connected');
+        } catch (e) { toast.error('Failed to save account'); }
+    };
+
+    // --- TikTok Ads Account Selection ---
+    const fetchTiktokAccounts = async () => {
+        setIntegrationsData(prev => ({ ...prev, tiktok_ads: { ...prev.tiktok_ads!, loading: true } }));
+        try {
+            const res = await api.integrations.tiktokAds.listAccounts(brandId);
+            setAdAccounts((res.accounts || []).map((a: any) => `${a.advertiser_id}|${a.advertiser_name}`));
+            setSelectingAccount(true);
+        } catch (e) {
+            toast.error('Failed to fetch TikTok advertiser accounts');
+        } finally {
+            setIntegrationsData(prev => ({ ...prev, tiktok_ads: { ...prev.tiktok_ads!, loading: false } }));
+        }
+    };
+
+    const saveTiktokAccount = async () => {
+        if (!selectedAdAccount) return;
+        const [advertiserId, name] = selectedAdAccount.split('|');
+        try {
+            await api.integrations.tiktokAds.selectAccount(brandId, advertiserId, selectedAdAccountName || name || advertiserId);
+            setSelectingAccount(false);
+            fetchStatus('tiktok_ads');
+            toast.success('TikTok Ads account connected');
+        } catch (e) { toast.error('Failed to save account'); }
+    };
+
+    const handleMetaConnect = async () => {
+        try {
+            const { url } = await api.integrations.metaAds.getAuthUrl(brandId);
+            window.location.href = url;
+        } catch (e) {
+            console.error(e);
+            toast.error('Failed to initiate Meta Ads connection');
+        }
+    };
+
+    const handleTiktokConnect = async () => {
+        try {
+            const { url } = await api.integrations.tiktokAds.getAuthUrl(brandId);
+            window.location.href = url;
+        } catch (e) {
+            console.error(e);
+            toast.error('Failed to initiate TikTok Ads connection');
+        }
+    };
+
     // --- Generic Logic ---
     const openConnectModal = (provider: ProviderConfig) => {
         if (provider.key === 'google_ads') {
             handleGoogleConnect();
+        } else if (provider.key === 'meta_ads') {
+            handleMetaConnect();
+        } else if (provider.key === 'tiktok_ads') {
+            handleTiktokConnect();
         } else {
             setCurrentProvider(provider);
             setManualForm({ accountName: '', accountId: '' });
@@ -276,44 +353,59 @@ export const IntegrationsCard = ({ brandId }: IntegrationsCardProps) => {
                                             </div>
                                         )}
 
-                                        {/* Google Ads Pending State */}
-                                        {provider.key === 'google_ads' && hasPending && !selectingAccount && (
+                                        {/* Pending State — Select Account */}
+                                        {hasPending && !selectingAccount && (
                                             <div className="mt-2 flex items-center gap-2">
                                                 <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20">Action Required</Badge>
-                                                <Button size="sm" variant="link" className="text-blue-600 h-auto p-0" onClick={fetchGoogleAccounts}>
+                                                <Button size="sm" variant="link" className="text-blue-600 h-auto p-0" onClick={() => {
+                                                    if (provider.key === 'google_ads') fetchGoogleAccounts();
+                                                    else if (provider.key === 'meta_ads') fetchMetaAccounts();
+                                                    else if (provider.key === 'tiktok_ads') fetchTiktokAccounts();
+                                                }}>
                                                     Select Ad Account
                                                 </Button>
                                             </div>
                                         )}
 
-                                        {/* Google Ads Account Selection UI */}
-                                        {provider.key === 'google_ads' && selectingAccount && (
+                                        {/* Account Selection UI (all OAuth providers) */}
+                                        {['google_ads', 'meta_ads', 'tiktok_ads'].includes(provider.key) && hasPending && selectingAccount && (
                                             <div className="mt-3 bg-white/[0.04] p-3 rounded border border-white/10 w-full max-w-sm">
-                                                <p className="text-xs font-bold mb-2">Select Google Ads Account</p>
+                                                <p className="text-xs font-bold mb-2 text-white">Select {provider.name} Account</p>
                                                 <select
-                                                    className="w-full text-sm border rounded p-1 mb-2"
+                                                    className="w-full text-sm border border-white/10 bg-white/[0.04] text-white rounded p-1.5 mb-2"
                                                     value={selectedAdAccount}
                                                     onChange={e => {
                                                         setSelectedAdAccount(e.target.value);
-                                                        // Extract ID from resource name "customers/123"
-                                                        const id = e.target.value.replace('customers/', '');
-                                                        setSelectedAdAccountName(`Account ${id}`);
+                                                        if (provider.key === 'google_ads') {
+                                                            const id = e.target.value.replace('customers/', '');
+                                                            setSelectedAdAccountName(`Account ${id}`);
+                                                        } else {
+                                                            const parts = e.target.value.split('|');
+                                                            setSelectedAdAccountName(parts[1] || parts[0]);
+                                                        }
                                                     }}
                                                 >
                                                     <option value="">Choose account...</option>
-                                                    {adAccounts.map(acc => (
-                                                        <option key={acc} value={acc}>{acc.replace('customers/', '')}</option>
-                                                    ))}
+                                                    {adAccounts.map(acc => {
+                                                        const display = provider.key === 'google_ads'
+                                                            ? acc.replace('customers/', '')
+                                                            : acc.split('|').reverse().join(' — ');
+                                                        return <option key={acc} value={acc}>{display}</option>;
+                                                    })}
                                                 </select>
                                                 <Input
                                                     placeholder="Account Name (Optional)"
-                                                    className="h-8 text-xs mb-2"
+                                                    className="h-8 text-xs mb-2 bg-white/[0.04] border-white/10"
                                                     value={selectedAdAccountName}
                                                     onChange={e => setSelectedAdAccountName(e.target.value)}
                                                 />
                                                 <div className="flex justify-end gap-2">
                                                     <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSelectingAccount(false)}>Cancel</Button>
-                                                    <Button size="sm" className="h-7 text-xs" onClick={saveGoogleAccount} disabled={!selectedAdAccount}>Confirm</Button>
+                                                    <Button size="sm" className="h-7 text-xs" onClick={() => {
+                                                        if (provider.key === 'google_ads') saveGoogleAccount();
+                                                        else if (provider.key === 'meta_ads') saveMetaAccount();
+                                                        else if (provider.key === 'tiktok_ads') saveTiktokAccount();
+                                                    }} disabled={!selectedAdAccount}>Confirm</Button>
                                                 </div>
                                             </div>
                                         )}
@@ -325,7 +417,7 @@ export const IntegrationsCard = ({ brandId }: IntegrationsCardProps) => {
                                     variant={isConnected ? "outline" : "default"} // "default" is usually black/dark
                                     className={isConnected ? "" : "bg-[rgba(22,32,50,0.8)] text-white"}
                                     onClick={() => openConnectModal(provider)}
-                                    disabled={loading || (provider.key === 'google_ads' && hasPending)}
+                                    disabled={loading || hasPending}
                                 >
                                     {isConnected ? <Plus className="h-4 w-4 mr-1" /> : ''}
                                     {isConnected ? 'Connect Another' : 'Connect'}

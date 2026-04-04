@@ -13,7 +13,9 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "db:seed": "npx tsx prisma/seed.ts"
+    "db:seed": "npx tsx prisma/seed.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.76",
@@ -79,6 +81,7 @@
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@types/topojson-client": "^3.1.5",
+    "@vitejs/plugin-react": "^6.0.1",
     "autoprefixer": "^10.4.22",
     "better-sqlite3": "^12.6.2",
     "concurrently": "^9.2.1",
@@ -91,6 +94,7 @@
     "tailwindcss": "^3.4.17",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
-    "vercel": "^50.37.1"
+    "vercel": "^50.37.1",
+    "vitest": "^4.1.2"
   }
 }
