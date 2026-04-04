@@ -12,6 +12,9 @@ export { runVision, askVision } from './vision';
 export { runPepper, askPepper } from './pepper';
 export { runHawkeye, askHawkeye } from './hawkeye';
 export { runSentinel, askSentinel } from './sentinel';
+export { runCommander, askCommander } from './commander';
+export { runAutopilot, askAutopilot } from './autopilot';
+export { runAllocator, askAllocator } from './allocator';
 
 export type { JarvisOptions } from './jarvis';
 
@@ -95,6 +98,39 @@ export const AGENT_CATALOG = [
         description: 'Vulnerability scanning, deployment automation, CI/CD, monitoring, and compliance.',
         capabilities: ['vulnerability_scanning', 'deployment', 'ci_cd', 'monitoring', 'compliance', 'dependency_audit'],
         endpoint: '/api/agents/sentinel',
+        requiredRole: 'admin',
+    },
+    {
+        id: 'commander',
+        name: 'COMMANDER',
+        role: 'Campaign Lifecycle Manager',
+        type: 'Builder',
+        model: 'claude-opus-4-6',
+        description: 'Campaign cloning, templates, bulk actions, approval workflows, and status enforcement.',
+        capabilities: ['campaign_cloning', 'template_management', 'bulk_operations', 'approval_workflow', 'status_enforcement'],
+        endpoint: '/api/agents/commander',
+        requiredRole: 'admin',
+    },
+    {
+        id: 'autopilot',
+        name: 'AUTOPILOT',
+        role: 'Automation & Rules Engine',
+        type: 'Builder',
+        model: 'claude-opus-4-6',
+        description: 'Campaign rules creation, condition evaluation, automated actions, execution auditing.',
+        capabilities: ['rule_creation', 'condition_evaluation', 'action_execution', 'consecutive_tracking', 'conflict_detection'],
+        endpoint: '/api/agents/autopilot',
+        requiredRole: 'admin',
+    },
+    {
+        id: 'allocator',
+        name: 'ALLOCATOR',
+        role: 'Budget & Performance Intelligence',
+        type: 'Builder',
+        model: 'claude-opus-4-6',
+        description: 'Budget pacing, spend forecasting, allocation management, cross-channel rebalancing.',
+        capabilities: ['budget_pacing', 'spend_forecasting', 'allocation_management', 'alert_evaluation', 'performance_rebalancing'],
+        endpoint: '/api/agents/allocator',
         requiredRole: 'admin',
     },
 ] as const;

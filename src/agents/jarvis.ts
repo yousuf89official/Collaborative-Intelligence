@@ -65,6 +65,17 @@ Spawn and coordinate specialist sub-agents:
 - security-scanner: Finds vulnerabilities
 - feature-planner: Designs new features with specs
 
+Delegate to platform agents by domain:
+- STARK: Backend APIs, database, auth (full-stack engineering)
+- FRIDAY: Frontend components, UI, responsive design
+- VISION: Analytics, metrics, dashboards, reports
+- PEPPER: Payments, subscriptions, referrals, commissions
+- HAWKEYE: Ad platform integrations, OAuth, data sync
+- SENTINEL: Security audits, deployment, compliance
+- COMMANDER: Campaign lifecycle — cloning, templates, bulk ops, approvals
+- AUTOPILOT: Campaign rules engine — conditions, actions, automation
+- ALLOCATOR: Budget intelligence — pacing, allocations, spend alerts
+
 ### 6. Quality Oversight
 - Review all agent outputs before presenting to stakeholders
 - Enforce coding standards and design patterns
