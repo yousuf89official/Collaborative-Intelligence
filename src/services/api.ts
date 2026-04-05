@@ -369,6 +369,7 @@ export const api = {
         getAlerts: (id: string) => fetchClient<any[]>(`/campaigns/${id}/alerts`),
         addAlert: (id: string, data: any) => fetchClient<any>(`/campaigns/${id}/alerts`, { method: 'POST', body: JSON.stringify(data) }),
         toggleAlert: (id: string, alertId: string, isActive: boolean) => fetchClient<any>(`/campaigns/${id}/alerts`, { method: 'PUT', body: JSON.stringify({ alertId, isActive }) }),
+        deleteAlert: (id: string, alertId: string) => fetchClient<any>(`/campaigns/${id}/alerts`, { method: 'DELETE', body: JSON.stringify({ alertId }) }),
     },
 
     campaignTemplates: {
