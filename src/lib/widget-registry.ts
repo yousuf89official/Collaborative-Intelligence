@@ -112,3 +112,7 @@ export const PRESET_LAYOUTS: Record<string, { name: string; description: string;
         ],
     },
 };
+
+// ─── Constants ─────────────────────────────────────────────────────────────
+
+export const LAYOUT_STORAGE_KEY = 'ci-dashboard-layout';

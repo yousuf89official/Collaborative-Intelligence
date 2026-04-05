@@ -1,46 +1,126 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, GripVertical, Plus } from 'lucide-react';
-import { BrandIcons } from '../icons/BrandIcons';
+import { X, Search, GripVertical, Plus, Check } from 'lucide-react';
+import {
+    WIDGET_REGISTRY,
+    WIDGET_CATEGORIES,
+    type WidgetDefinition,
+} from '@/lib/widget-registry';
+import {
+    Target,
+    DollarSign,
+    Eye,
+    TrendingUp,
+    LineChart,
+    List,
+    Zap,
+    Activity,
+    GitPullRequestArrow,
+    Gauge,
+    Sparkles,
+    Bell,
+    Link2,
+    Building2,
+    BarChart3,
+    type LucideIcon,
+} from 'lucide-react';
+
+// ─── Icon Map ──────────────────────────────────────────────────────────────
+
+const ICON_MAP: Record<string, LucideIcon> = {
+    Target,
+    DollarSign,
+    Eye,
+    TrendingUp,
+    LineChart,
+    List,
+    Zap,
+    Activity,
+    GitPullRequestArrow,
+    Gauge,
+    Sparkles,
+    Bell,
+    Link2,
+    Building2,
+    BarChart3,
+};
+
+// ─── Props ─────────────────────────────────────────────────────────────────
 
 interface WidgetDrawerProps {
     isOpen: boolean;
     onClose: () => void;
+    onAddWidget?: (widgetId: string) => void;
+    activeWidgetIds?: string[];
 }
 
-const WIDGET_CATEGORIES = [
-    {
-        id: 'social', name: 'Social Media', items: [
-            { name: 'Instagram', icon: BrandIcons.Instagram },
-            { name: 'Facebook', icon: BrandIcons.Facebook },
-            { name: 'TikTok', icon: BrandIcons.TikTok },
-            { name: 'YouTube', icon: BrandIcons.Youtube },
-            { name: 'Twitter', icon: BrandIcons.Twitter },
-            { name: 'LinkedIn', icon: BrandIcons.Linkedin },
-        ]
-    },
-    {
-        id: 'charts', name: 'Charts & Data', items: [
-            { name: 'Revenue', icon: BrandIcons.Google }, // Placeholder icon
-            { name: 'Growth', icon: BrandIcons.Google },
-            { name: 'Engagement', icon: BrandIcons.Google },
-        ]
-    },
-    {
-        id: 'media', name: 'Media Assets', items: [
-            { name: 'Logo Pack', icon: BrandIcons.Google },
-            { name: 'Brand Colors', icon: BrandIcons.Google },
-        ]
-    }
-];
+// ─── Size Label Helper ─────────────────────────────────────────────────────
 
-export const WidgetDrawer: React.FC<WidgetDrawerProps> = ({ isOpen, onClose }) => {
+function sizeLabel(w: number, h: number): string {
+    if (w === 1 && h === 1) return 'Small';
+    if (w <= 2 && h <= 1) return 'Medium';
+    if (w <= 2 && h <= 2) return 'Large';
+    return 'Full';
+}
+
+// ─── Category Label Map ────────────────────────────────────────────────────
+
+const CATEGORY_LABELS: Record<string, string> = {
+    all: 'All',
+    metrics: 'Metrics',
+    charts: 'Charts',
+    campaigns: 'Campaigns',
+    intelligence: 'Intelligence',
+    platform: 'Platform',
+};
+
+// ─── Component ─────────────────────────────────────────────────────────────
+
+export const WidgetDrawer: React.FC<WidgetDrawerProps> = ({
+    isOpen,
+    onClose,
+    onAddWidget,
+    activeWidgetIds = [],
+}) => {
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('social');
+    const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-    // Filter logic would go here
+    // Filtered widgets based on search + category
+    const filteredWidgets = useMemo(() => {
+        let widgets = WIDGET_REGISTRY;
+
+        // Category filter
+        if (selectedCategory !== 'all') {
+            widgets = widgets.filter((w) => w.category === selectedCategory);
+        }
+
+        // Search filter
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            widgets = widgets.filter(
+                (w) =>
+                    w.name.toLowerCase().includes(q) ||
+                    w.description.toLowerCase().includes(q)
+            );
+        }
+
+        return widgets;
+    }, [selectedCategory, searchQuery]);
+
+    const activeSet = useMemo(() => new Set(activeWidgetIds), [activeWidgetIds]);
+
+    // All category options: WIDGET_CATEGORIES plus 'all'
+    const categoryTabs = useMemo(() => {
+        return [
+            { id: 'all', name: 'All' },
+            ...WIDGET_CATEGORIES.map((cat) => ({
+                id: cat,
+                name: CATEGORY_LABELS[cat] ?? cat,
+            })),
+        ];
+    }, []);
 
     return (
         <AnimatePresence>
@@ -61,89 +141,154 @@ export const WidgetDrawer: React.FC<WidgetDrawerProps> = ({ isOpen, onClose }) =
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed top-0 right-0 h-full w-[400px] bg-white/[0.04] bg-gray-900 border-l border-gray-200 border-gray-800 shadow-2xl z-50 flex flex-col"
+                        className="fixed top-0 right-0 h-full w-[420px] max-w-[90vw] bg-[#0b1120] border-l border-white/[0.06] shadow-2xl z-50 flex flex-col"
                     >
                         {/* Header */}
-                        <div className="p-6 border-b border-gray-100 border-gray-800 flex justify-between items-center">
+                        <div className="p-6 border-b border-white/[0.06] flex justify-between items-center">
                             <div>
-                                <h2 className="text-xl font-bold">Add Widget</h2>
-                                <p className="text-sm text-muted-foreground">Drag and drop to dashboard</p>
+                                <h2 className="text-xl font-bold text-white">Add Widget</h2>
+                                <p className="text-sm text-white/40 mt-0.5">
+                                    {WIDGET_REGISTRY.length} widgets available
+                                </p>
                             </div>
                             <button
                                 onClick={onClose}
-                                className="p-2 hover:bg-gray-100 hover:bg-gray-800 rounded-full transition-colors"
+                                className="p-2 hover:bg-white/[0.06] rounded-full transition-colors text-white/40 hover:text-white/70"
                             >
                                 <X size={20} />
                             </button>
                         </div>
 
                         {/* Search */}
-                        <div className="p-4 border-b border-gray-800">
+                        <div className="p-4 border-b border-white/[0.06]">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16} />
                                 <input
                                     type="text"
                                     placeholder="Search widgets..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-9 pr-4 py-2 rounded-lg bg-gray-800 text-white placeholder:text-white/30 border-none outline-none focus:ring-2 focus:ring-[#0D9488]/50"
+                                    className="w-full pl-9 pr-4 py-2 rounded-lg bg-white/[0.04] text-white placeholder:text-white/30 border border-white/[0.06] outline-none focus:ring-2 focus:ring-primary/50 text-sm"
                                 />
                             </div>
                         </div>
 
-                        {/* Categories */}
-                        <div className="flex gap-2 p-4 overflow-x-auto scrollbar-hide border-b border-gray-800">
-                            {WIDGET_CATEGORIES.map(cat => (
+                        {/* Category Tabs */}
+                        <div className="flex gap-2 p-4 overflow-x-auto scrollbar-hide border-b border-white/[0.06]">
+                            {categoryTabs.map((cat) => (
                                 <button
                                     key={cat.id}
                                     onClick={() => setSelectedCategory(cat.id)}
-                                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedCategory === cat.id
-                                            ? 'bg-white/[0.04] text-white'
-                                            : 'bg-gray-800 text-gray-400 hover:bg-white/[0.08]'
-                                        }`}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
+                                        selectedCategory === cat.id
+                                            ? 'bg-primary/20 text-primary'
+                                            : 'bg-white/[0.04] text-white/40 hover:bg-white/[0.08] hover:text-white/60'
+                                    }`}
                                 >
                                     {cat.name}
                                 </button>
                             ))}
                         </div>
 
-                        {/* Grid Items */}
+                        {/* Widget List */}
                         <div className="flex-1 overflow-y-auto p-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                {WIDGET_CATEGORIES.find(c => c.id === selectedCategory)?.items.map((item, idx) => (
-                                    <div
-                                        key={idx}
-                                        className="group relative bg-white/[0.04] bg-gray-800/50 border border-gray-200 border-gray-700 rounded-xl p-4 cursor-grab active:cursor-grabbing hover:border-[#0D9488] hover:shadow-md transition-all"
-                                        draggable
-                                        onDragStart={(e) => {
-                                            e.dataTransfer.setData('widgetType', item.name);
-                                            e.dataTransfer.effectAllowed = 'copy';
-                                        }}
-                                    >
-                                        <div className="flex flex-col items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-gray-50 bg-gray-700 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                <item.icon width={24} height={24} />
+                            {filteredWidgets.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-12 gap-2">
+                                    <Search className="h-8 w-8 text-white/10" />
+                                    <p className="text-sm text-white/30">No widgets found</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-3">
+                                    {filteredWidgets.map((widget) => {
+                                        const isAdded = activeSet.has(widget.id);
+                                        const Icon = ICON_MAP[widget.icon] ?? Activity;
+
+                                        return (
+                                            <div
+                                                key={widget.id}
+                                                className={`group relative bg-white/[0.03] border rounded-xl p-4 transition-all ${
+                                                    isAdded
+                                                        ? 'border-primary/30 opacity-60'
+                                                        : 'border-white/[0.06] hover:border-primary/40 hover:bg-white/[0.05] cursor-pointer'
+                                                }`}
+                                                draggable={!isAdded}
+                                                onDragStart={(e) => {
+                                                    e.dataTransfer.setData('widgetId', widget.id);
+                                                    e.dataTransfer.effectAllowed = 'copy';
+                                                }}
+                                            >
+                                                <div className="flex flex-col gap-2.5">
+                                                    {/* Icon + Category Badge */}
+                                                    <div className="flex items-start justify-between">
+                                                        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                            <Icon size={18} className="text-primary" />
+                                                        </div>
+                                                        {isAdded ? (
+                                                            <span className="flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                                                                <Check size={10} /> Added
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[10px] font-bold text-white/30 bg-white/[0.04] px-2 py-0.5 rounded-full capitalize">
+                                                                {widget.category}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Name */}
+                                                    <span className="text-xs font-bold text-white/80 leading-tight">
+                                                        {widget.name}
+                                                    </span>
+
+                                                    {/* Description */}
+                                                    <p className="text-[10px] text-white/30 leading-relaxed line-clamp-2">
+                                                        {widget.description}
+                                                    </p>
+
+                                                    {/* Size indicator */}
+                                                    <span className="text-[10px] text-white/20 font-medium">
+                                                        {sizeLabel(widget.defaultSize.w, widget.defaultSize.h)} &middot; {widget.defaultSize.w}x{widget.defaultSize.h}
+                                                    </span>
+                                                </div>
+
+                                                {/* Drag handle */}
+                                                {!isAdded && (
+                                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-white/20">
+                                                        <GripVertical size={14} />
+                                                    </div>
+                                                )}
+
+                                                {/* Add button */}
+                                                {!isAdded && onAddWidget && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onAddWidget(widget.id);
+                                                        }}
+                                                        className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 group-hover:-bottom-1 transition-all shadow-lg flex items-center gap-1 hover:bg-primary/90"
+                                                    >
+                                                        <Plus size={10} /> Add
+                                                    </button>
+                                                )}
                                             </div>
-                                            <span className="text-xs font-bold text-center">{item.name}</span>
-                                        </div>
-
-                                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400">
-                                            <GripVertical size={14} />
-                                        </div>
-
-                                        <button className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] font-bold px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 group-hover:bottom-2 transition-all shadow-lg flex items-center gap-1">
-                                            <Plus size={10} /> Add
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
 
                         {/* Footer */}
-                        <div className="p-4 border-t border-gray-100 border-gray-800 bg-gray-50 bg-gray-900/50 text-center">
-                            <p className="text-xs text-muted-foreground">
-                                Use the <span className="font-bold">Upload</span> tab to add custom assets.
-                            </p>
+                        <div className="p-4 border-t border-white/[0.06] bg-white/[0.02]">
+                            <div className="flex items-center justify-between">
+                                <p className="text-xs text-white/30">
+                                    {activeWidgetIds.length} of {WIDGET_REGISTRY.length} widgets active
+                                </p>
+                                <button
+                                    onClick={onClose}
+                                    className="text-xs font-bold text-primary hover:text-primary/80 transition-colors"
+                                >
+                                    Done
+                                </button>
+                            </div>
                         </div>
                     </motion.div>
                 </>
