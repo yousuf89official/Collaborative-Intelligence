@@ -189,12 +189,12 @@ export const CampaignAutoFill = ({ onAutoFill }: CampaignAutoFillProps) => {
                             onValueChange={setSelectedBrandId}
                             disabled={loadingBrands}
                         >
-                            <SelectTrigger className="h-8 text-xs bg-white/[0.04] border-white/10">
+                            <SelectTrigger className="h-8 text-xs bg-white/[0.04] border-white/10 text-white">
                                 <SelectValue placeholder={loadingBrands ? 'Loading...' : 'Select brand'} />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-[#0a0f1a] border-white/10">
                                 {brands.map((b) => (
-                                    <SelectItem key={b.id} value={b.id} className="text-xs">
+                                    <SelectItem key={b.id} value={b.id} className="text-xs text-white/70 focus:bg-white/[0.08] focus:text-white">
                                         {b.name}
                                     </SelectItem>
                                 ))}
@@ -209,7 +209,7 @@ export const CampaignAutoFill = ({ onAutoFill }: CampaignAutoFillProps) => {
                             onValueChange={setSelectedCampaignId}
                             disabled={!selectedBrandId || loadingCampaigns}
                         >
-                            <SelectTrigger className="h-8 text-xs bg-white/[0.04] border-white/10">
+                            <SelectTrigger className="h-8 text-xs bg-white/[0.04] border-white/10 text-white">
                                 <SelectValue
                                     placeholder={
                                         loadingCampaigns ? 'Loading...' :
@@ -218,9 +218,9 @@ export const CampaignAutoFill = ({ onAutoFill }: CampaignAutoFillProps) => {
                                     }
                                 />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-[#0a0f1a] border-white/10">
                                 {campaigns.map((c) => (
-                                    <SelectItem key={c.id} value={c.id} className="text-xs">
+                                    <SelectItem key={c.id} value={c.id} className="text-xs text-white/70 focus:bg-white/[0.08] focus:text-white">
                                         {c.name}
                                     </SelectItem>
                                 ))}

@@ -111,13 +111,13 @@ export default function BrandIdentityPage() {
                             <div className="space-y-2">
                                 <label className="text-xs font-medium text-white/60">Primary Font</label>
                                 <select value={identity.fontPrimary} onChange={(e) => update('fontPrimary', e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#0D9488]/50 transition-all">
-                                    {['Poppins', 'Inter', 'DM Sans', 'Plus Jakarta Sans', 'Outfit'].map(f => <option key={f} value={f} className="bg-[#161616]">{f}</option>)}
+                                    {['Poppins', 'Inter', 'DM Sans', 'Plus Jakarta Sans', 'Outfit'].map(f => <option key={f} value={f} className="bg-[#0a0f1a] text-white">{f}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-medium text-white/60">Secondary Font</label>
                                 <select value={identity.fontSecondary} onChange={(e) => update('fontSecondary', e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#0D9488]/50 transition-all">
-                                    {['Inter', 'Poppins', 'DM Sans', 'IBM Plex Sans', 'Source Sans Pro'].map(f => <option key={f} value={f} className="bg-[#161616]">{f}</option>)}
+                                    {['Inter', 'Poppins', 'DM Sans', 'IBM Plex Sans', 'Source Sans Pro'].map(f => <option key={f} value={f} className="bg-[#0a0f1a] text-white">{f}</option>)}
                                 </select>
                             </div>
                         </div>
@@ -135,7 +135,7 @@ export default function BrandIdentityPage() {
                                 <div key={style.key} className="space-y-2">
                                     <label className="text-xs font-medium text-white/60">{style.label}</label>
                                     <select value={(identity as any)[style.key]} onChange={(e) => update(style.key, e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#0D9488]/50 transition-all">
-                                        {style.options.map(o => <option key={o} value={o} className="bg-[#161616]">{o}</option>)}
+                                        {style.options.map(o => <option key={o} value={o} className="bg-[#0a0f1a] text-white">{o}</option>)}
                                     </select>
                                 </div>
                             ))}

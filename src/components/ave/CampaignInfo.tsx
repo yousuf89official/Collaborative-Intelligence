@@ -67,13 +67,13 @@ export const CampaignInfo = ({ formData, onInputChange, selectedChannels, onChan
                     <div className="space-y-2">
                         <Label>Campaign Type</Label>
                         <Select value={formData.campaignType || ''} onValueChange={(val) => onInputChange('campaignType', val)}>
-                            <SelectTrigger>
+                            <SelectTrigger className="bg-white/[0.04] border-white/10 text-white">
                                 <SelectValue placeholder="Select funnel stage" />
                             </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="top-funnel">Top Funnel (Awareness)</SelectItem>
-                                <SelectItem value="middle-funnel">Middle Funnel (Consideration)</SelectItem>
-                                <SelectItem value="bottom-funnel">Bottom Funnel (Conversion)</SelectItem>
+                            <SelectContent className="bg-[#0a0f1a] border-white/10">
+                                <SelectItem value="top-funnel" className="text-white/70 focus:bg-white/[0.08] focus:text-white">Top Funnel (Awareness)</SelectItem>
+                                <SelectItem value="middle-funnel" className="text-white/70 focus:bg-white/[0.08] focus:text-white">Middle Funnel (Consideration)</SelectItem>
+                                <SelectItem value="bottom-funnel" className="text-white/70 focus:bg-white/[0.08] focus:text-white">Bottom Funnel (Conversion)</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

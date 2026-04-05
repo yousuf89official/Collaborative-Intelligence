@@ -207,11 +207,11 @@ export default function AttributionPage() {
                         <select
                             value={brandId}
                             onChange={(e) => setBrandId(e.target.value)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white/[0.03] text-white/60 border border-white/[0.06] focus:outline-none focus:border-[#0D9488]/40"
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#0d1320] border border-white/[0.08] text-white focus:outline-none focus:ring-2 focus:ring-[#0D9488]/30"
                         >
-                            <option value="all">All Brands</option>
+                            <option value="all" className="bg-[#0a0f1a] text-white">All Brands</option>
                             {data?.brands.map((b) => (
-                                <option key={b.id} value={b.id}>
+                                <option key={b.id} value={b.id} className="bg-[#0a0f1a] text-white">
                                     {b.name}
                                 </option>
                             ))}

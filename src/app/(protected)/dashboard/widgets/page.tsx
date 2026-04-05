@@ -224,17 +224,17 @@ export default function WidgetsPage() {
 
                         {/* Preset selector */}
                         <Select value={selectedPreset} onValueChange={handlePresetChange}>
-                            <SelectTrigger className="w-[160px] h-9 bg-[rgba(22,32,50,0.6)] border-white/[0.06] text-white/70 text-xs font-bold rounded-xl">
+                            <SelectTrigger className="w-[160px] h-9 bg-white/[0.04] border-white/10 text-white text-xs font-bold rounded-xl">
                                 <SelectValue placeholder="Select preset" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#0f1729] border-white/[0.06]">
+                            <SelectContent className="bg-[#0a0f1a] border-white/10">
                                 {Object.entries(PRESET_LAYOUTS).map(([key, preset]) => (
-                                    <SelectItem key={key} value={key} className="text-xs font-medium text-white/70">
+                                    <SelectItem key={key} value={key} className="text-xs font-medium text-white/70 focus:bg-white/[0.08] focus:text-white">
                                         {preset.name}
                                     </SelectItem>
                                 ))}
                                 {selectedPreset === 'custom' && (
-                                    <SelectItem value="custom" className="text-xs font-medium text-white/40" disabled>
+                                    <SelectItem value="custom" className="text-xs font-medium text-white/40 focus:bg-white/[0.08] focus:text-white" disabled>
                                         Custom
                                     </SelectItem>
                                 )}

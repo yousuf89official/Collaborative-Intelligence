@@ -63,12 +63,12 @@ export const MetricManager = ({ selectedChannelIds, selectedMetricIds, metricVal
             {isAddingMsg && (
                 <div className="p-4 bg-muted/30 rounded-lg border border-white/10 flex gap-2 animate-in slide-in-from-top-2">
                     <Select value={metricToAdd} onValueChange={setMetricToAdd}>
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="w-full bg-white/[0.04] border-white/10 text-white">
                             <SelectValue placeholder="Select a metric to add..." />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-[#0a0f1a] border-white/10">
                             {availableMetricOptions.map(m => (
-                                <SelectItem key={m.id} value={m.id}>
+                                <SelectItem key={m.id} value={m.id} className="text-white/70 focus:bg-white/[0.08] focus:text-white">
                                     {m.label} <span className="text-muted-foreground text-xs ml-2">({m.channelId})</span>
                                 </SelectItem>
                             ))}

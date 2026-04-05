@@ -180,9 +180,9 @@ const CampaignTypeConfigurator = ({
                                 e.target.value = "";
                             }}
                         >
-                            <option value="">+ Add Channel</option>
+                            <option value="" className="bg-[#0a0f1a] text-white">+ Add Channel</option>
                             {availableChannelsToAdd.map(ch => (
-                                <option key={ch.id} value={ch.id}>{ch.name}</option>
+                                <option key={ch.id} value={ch.id} className="bg-[#0a0f1a] text-white">{ch.name}</option>
                             ))}
                         </select>
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/40">
@@ -258,9 +258,9 @@ const CampaignTypeConfigurator = ({
                         <div className="flex justify-between items-center">
                             <Label>KPI Targets</Label>
                             <SelectWrapper className="w-32 h-7 text-[10px]" onChange={(e: any) => addMetric(e.target.value)} value="">
-                                <option value="">+ Add KPI</option>
+                                <option value="" className="bg-[#0a0f1a] text-white">+ Add KPI</option>
                                 {availableMetrics.map(m => (
-                                    <option key={m.id} value={m.id}>{m.name}</option>
+                                    <option key={m.id} value={m.id} className="bg-[#0a0f1a] text-white">{m.name}</option>
                                 ))}
                             </SelectWrapper>
                         </div>
@@ -480,9 +480,9 @@ const CampaignEditCard = ({
                                     onChange={(e) => onUpdate(campaign.id, 'funnel_type', e.target.value)}
                                     className="text-sm font-medium text-white/60 bg-transparent border-none p-0 focus:ring-0 hover:text-[#0D9488] border-b border-dashed border-white/20 hover:border-[#0D9488]/40 cursor-pointer pb-0.5 appearance-none"
                                 >
-                                    <option value="TOP">Top</option>
-                                    <option value="MID">Mid</option>
-                                    <option value="BOTTOM">Bottom</option>
+                                    <option value="TOP" className="bg-[#0a0f1a] text-white">Top</option>
+                                    <option value="MID" className="bg-[#0a0f1a] text-white">Mid</option>
+                                    <option value="BOTTOM" className="bg-[#0a0f1a] text-white">Bottom</option>
                                 </select>
                             </div>
                         </div>
@@ -570,12 +570,12 @@ const CampaignEditCard = ({
                                         onChange={handleSubCampaignChange}
                                     >
                                         <optgroup label="Active Sub Campaigns">
-                                            {campaign.types.map(t => <option key={t} value={t}>{t}</option>)}
+                                            {campaign.types.map(t => <option key={t} value={t} className="bg-[#0a0f1a] text-white">{t}</option>)}
                                         </optgroup>
                                         {availableTypesToAdd.length > 0 && (
                                             <optgroup label="Add New">
                                                 {availableTypesToAdd.map(t => (
-                                                    <option key={t.id} value={`add_${t.id}`}>+ Add {t.name}</option>
+                                                    <option key={t.id} value={`add_${t.id}`} className="bg-[#0a0f1a] text-white">+ Add {t.name}</option>
                                                 ))}
                                             </optgroup>
                                         )}
@@ -909,9 +909,9 @@ export default function DataManagementView({
                                     onChange={(e: any) => setNewFunnel(e.target.value as any)}
                                     className="h-12 bg-white/[0.04] border-white/10 focus:ring-[#0D9488]/40"
                                 >
-                                    <option value="TOP">Top (Awareness)</option>
-                                    <option value="MID">Mid (Consideration)</option>
-                                    <option value="BOTTOM">Bottom (Conversion)</option>
+                                    <option value="TOP" className="bg-[#0a0f1a] text-white">Top (Awareness)</option>
+                                    <option value="MID" className="bg-[#0a0f1a] text-white">Mid (Consideration)</option>
+                                    <option value="BOTTOM" className="bg-[#0a0f1a] text-white">Bottom (Conversion)</option>
                                 </SelectWrapper>
                                 <p className="text-[10px] text-white/40 mt-1 italic">This sets the default strategy and AI optimization parameters.</p>
                             </div>

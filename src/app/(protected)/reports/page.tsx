@@ -135,8 +135,8 @@ export default function ReportsPage() {
                         onChange={e => setSelectedBrand(e.target.value)}
                         className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-xs font-bold focus:outline-none focus:border-[#0D9488]/40 focus:ring-2 focus:ring-[#0D9488]/20"
                     >
-                        <option value="">Select Brand</option>
-                        {brands.map((b: any) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                        <option value="" className="bg-[#0a0f1a] text-white">Select Brand</option>
+                        {brands.map((b: any) => <option key={b.id} value={b.id} className="bg-[#0a0f1a] text-white">{b.name}</option>)}
                     </select>
                 </div>
                 <div className="flex gap-1">

@@ -348,12 +348,12 @@ function CreateTemplateDialog({
                         </div>
                         {!isGlobal && (
                             <Select value={brandId} onValueChange={setBrandId}>
-                                <SelectTrigger className="bg-white/[0.03] border-white/[0.06]">
+                                <SelectTrigger className="bg-white/[0.04] border-white/10 text-white">
                                     <SelectValue placeholder="Select a brand" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="bg-[#0a0f1a] border-white/10">
                                     {brands.map(brand => (
-                                        <SelectItem key={brand.id} value={brand.id}>
+                                        <SelectItem key={brand.id} value={brand.id} className="text-white/70 focus:bg-white/[0.08] focus:text-white">
                                             {brand.name}
                                         </SelectItem>
                                     ))}
@@ -551,12 +551,12 @@ function UseTemplateDialog({
                             Brand *
                         </Label>
                         <Select value={brandId} onValueChange={setBrandId}>
-                            <SelectTrigger className="mt-1.5 bg-white/[0.03] border-white/[0.06]">
+                            <SelectTrigger className="mt-1.5 bg-white/[0.04] border-white/10 text-white">
                                 <SelectValue placeholder="Select a brand" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-[#0a0f1a] border-white/10">
                                 {brands.map(brand => (
-                                    <SelectItem key={brand.id} value={brand.id}>
+                                    <SelectItem key={brand.id} value={brand.id} className="text-white/70 focus:bg-white/[0.08] focus:text-white">
                                         {brand.name}
                                     </SelectItem>
                                 ))}

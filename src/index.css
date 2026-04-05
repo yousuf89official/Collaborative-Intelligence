@@ -332,15 +332,24 @@ body {
 .admin-dark {
   --background: #0C1222;
   --foreground: #f4f4f4;
-  --card: rgba(22, 32, 50, 0.5);
+  --card: #162032;
   --card-foreground: #f4f4f4;
   --muted: #162032;
   --muted-foreground: rgba(255, 255, 255, 0.5);
   --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.06);
+  --input: #0d1320;
+  --input-foreground: #f4f4f4;
   --ring: #0D9488;
-  --popover: #162032;
+  --popover: #0a0f1a;
   --popover-foreground: #f4f4f4;
+  --accent: #0D9488;
+  --accent-foreground: #f4f4f4;
+  --destructive: #ef4444;
+  --destructive-foreground: #f4f4f4;
+  --secondary: #162032;
+  --secondary-foreground: #f4f4f4;
+  --primary: #0D9488;
+  --primary-foreground: #ffffff;
 
   background-color: #0C1222;
   color: #f4f4f4;

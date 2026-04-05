@@ -566,7 +566,7 @@ export default function UsersPage() {
                                 <select value={inviteRole} onChange={e => setInviteRole(e.target.value)}
                                     className="flex h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1 text-sm text-white shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488]/40 hover:bg-white/[0.06] appearance-none">
                                     {ROLES.filter(r => !['super_admin', 'MasterAdmin'].includes(r.id)).map(r => (
-                                        <option key={r.id} value={r.id} className="bg-[#0C1222] text-white">{r.label}</option>
+                                        <option key={r.id} value={r.id} className="bg-[#0a0f1a] text-white">{r.label}</option>
                                     ))}
                                 </select>
                             </div>
@@ -618,7 +618,7 @@ export default function UsersPage() {
                                 <select value={editRole} onChange={e => setEditRole(e.target.value)}
                                     className="h-9 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488]/40 appearance-none">
                                     {ROLES.filter(r => !['super_admin', 'MasterAdmin'].includes(r.id)).map(r => (
-                                        <option key={r.id} value={r.id} className="bg-[#0C1222] text-white">{r.label}</option>
+                                        <option key={r.id} value={r.id} className="bg-[#0a0f1a] text-white">{r.label}</option>
                                     ))}
                                 </select>
                             </div>

@@ -90,10 +90,10 @@ export default function ApprovalWorkflowPage() {
                             <SelectTrigger className="w-[200px] bg-white/[0.04] border-white/10 text-white">
                                 <SelectValue placeholder="All Brands" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#162032] border-white/10">
-                                <SelectItem value="all" className="text-white/70">All Brands</SelectItem>
+                            <SelectContent className="bg-[#0a0f1a] border-white/10">
+                                <SelectItem value="all" className="text-white/70 focus:bg-white/[0.08] focus:text-white">All Brands</SelectItem>
                                 {brands.map(b => (
-                                    <SelectItem key={b.id} value={b.id} className="text-white/70">{b.name}</SelectItem>
+                                    <SelectItem key={b.id} value={b.id} className="text-white/70 focus:bg-white/[0.08] focus:text-white">{b.name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>

@@ -237,7 +237,7 @@ export default function ChatbotPage() {
                             )}
                             {field.type === 'select' && (
                                 <select value={(config as any)[field.key]} onChange={(e) => setConfig(prev => ({ ...prev, [field.key]: e.target.value }))} className="w-64 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-[#0D9488]/50 transition-all">
-                                    {field.options?.map(o => <option key={o} value={o} className="bg-[#161616]">{o}</option>)}
+                                    {field.options?.map(o => <option key={o} value={o} className="bg-[#0a0f1a] text-white">{o}</option>)}
                                 </select>
                             )}
                             {field.type === 'number' && (

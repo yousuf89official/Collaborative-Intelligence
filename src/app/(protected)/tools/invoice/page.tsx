@@ -212,7 +212,7 @@ export default function InvoicePage() {
 
             {/* Full Screen Modal for Invoice Editor */}
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogContent className="max-w-[95vw] h-[95vh] p-0 overflow-y-auto bg-gray-100 rounded-lg">
+                <DialogContent className="max-w-[95vw] h-[95vh] p-0 overflow-y-auto bg-[#0a0f1a] rounded-lg">
                     <DialogTitle className="sr-only">Invoice Editor</DialogTitle>
                     {/* Invoice Form Component */}
                     {isOpen && (

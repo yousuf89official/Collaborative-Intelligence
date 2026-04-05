@@ -60,10 +60,10 @@ export default function ApiKeysPage() {
                         <div className="space-y-2">
                             <label className="text-xs font-medium text-white/60">Rate Limit</label>
                             <select className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#0D9488]/50 transition-all">
-                                <option value="100" className="bg-[#161616]">100 requests/min</option>
-                                <option value="500" className="bg-[#161616]">500 requests/min</option>
-                                <option value="1000" className="bg-[#161616]">1,000 requests/min</option>
-                                <option value="5000" className="bg-[#161616]">5,000 requests/min</option>
+                                <option value="100" className="bg-[#0a0f1a] text-white">100 requests/min</option>
+                                <option value="500" className="bg-[#0a0f1a] text-white">500 requests/min</option>
+                                <option value="1000" className="bg-[#0a0f1a] text-white">1,000 requests/min</option>
+                                <option value="5000" className="bg-[#0a0f1a] text-white">5,000 requests/min</option>
                             </select>
                         </div>
                     </div>
@@ -72,7 +72,7 @@ export default function ApiKeysPage() {
                         <div className="grid grid-cols-3 gap-2">
                             {SCOPES.map(s => (
                                 <label key={s.scope} className="flex items-center gap-2 p-2 rounded-lg border border-white/5 hover:border-white/10 cursor-pointer">
-                                    <input type="checkbox" className="rounded border-white/20" />
+                                    <input type="checkbox" className="rounded border-white/20 bg-white/[0.04] text-[#0D9488] focus:ring-[#0D9488]/30" />
                                     <div>
                                         <span className="text-xs font-mono text-white/70">{s.scope}</span>
                                     </div>

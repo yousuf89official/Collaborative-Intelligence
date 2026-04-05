@@ -372,7 +372,7 @@ export const IntegrationsCard = ({ brandId }: IntegrationsCardProps) => {
                                             <div className="mt-3 bg-white/[0.04] p-3 rounded border border-white/10 w-full max-w-sm">
                                                 <p className="text-xs font-bold mb-2 text-white">Select {provider.name} Account</p>
                                                 <select
-                                                    className="w-full text-sm border border-white/10 bg-white/[0.04] text-white rounded p-1.5 mb-2"
+                                                    className="w-full text-sm border border-white/[0.08] bg-[#0d1320] text-white rounded-md p-1.5 mb-2 focus:outline-none focus:ring-2 focus:ring-[#0D9488]/30"
                                                     value={selectedAdAccount}
                                                     onChange={e => {
                                                         setSelectedAdAccount(e.target.value);
@@ -385,12 +385,12 @@ export const IntegrationsCard = ({ brandId }: IntegrationsCardProps) => {
                                                         }
                                                     }}
                                                 >
-                                                    <option value="">Choose account...</option>
+                                                    <option value="" className="bg-[#0a0f1a] text-white">Choose account...</option>
                                                     {adAccounts.map(acc => {
                                                         const display = provider.key === 'google_ads'
                                                             ? acc.replace('customers/', '')
                                                             : acc.split('|').reverse().join(' — ');
-                                                        return <option key={acc} value={acc}>{display}</option>;
+                                                        return <option key={acc} value={acc} className="bg-[#0a0f1a] text-white">{display}</option>;
                                                     })}
                                                 </select>
                                                 <Input

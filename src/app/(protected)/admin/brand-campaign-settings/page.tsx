@@ -127,12 +127,12 @@ export default function BrandCampaignSettingsPage() {
                         <div className="space-y-1.5">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-white/40">Target Brand</Label>
                             <Select value={selectedBrandId} onValueChange={setSelectedBrandId}>
-                                <SelectTrigger className="w-full bg-white/[0.03] border-white/[0.06]">
+                                <SelectTrigger className="w-full bg-white/[0.04] border-white/10 text-white">
                                     <SelectValue placeholder="Select Brand" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="bg-[#0a0f1a] border-white/10">
                                     {brands.map(brand => (
-                                        <SelectItem key={brand.id} value={brand.id}>
+                                        <SelectItem key={brand.id} value={brand.id} className="text-white/70 focus:bg-white/[0.08] focus:text-white">
                                             {brand.name}
                                         </SelectItem>
                                     ))}

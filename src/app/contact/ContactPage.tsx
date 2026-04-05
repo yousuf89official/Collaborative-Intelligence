@@ -144,12 +144,12 @@ export function ContactPage() {
                                             onChange={(e) => setForm({ ...form, interest: e.target.value })}
                                             className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#0D9488]/50 focus:ring-1 focus:ring-[#0D9488]/30 transition-all"
                                         >
-                                            <option value="" className="bg-[#161616]">Select an option</option>
-                                            <option value="demo" className="bg-[#161616]">Book a Demo</option>
-                                            <option value="pricing" className="bg-[#161616]">Custom Pricing</option>
-                                            <option value="partnership" className="bg-[#161616]">Partnership</option>
-                                            <option value="support" className="bg-[#161616]">Technical Support</option>
-                                            <option value="other" className="bg-[#161616]">Other</option>
+                                            <option value="" className="bg-[#0a0f1a] text-white">Select an option</option>
+                                            <option value="demo" className="bg-[#0a0f1a] text-white">Book a Demo</option>
+                                            <option value="pricing" className="bg-[#0a0f1a] text-white">Custom Pricing</option>
+                                            <option value="partnership" className="bg-[#0a0f1a] text-white">Partnership</option>
+                                            <option value="support" className="bg-[#0a0f1a] text-white">Technical Support</option>
+                                            <option value="other" className="bg-[#0a0f1a] text-white">Other</option>
                                         </select>
                                     </div>
                                 </div>

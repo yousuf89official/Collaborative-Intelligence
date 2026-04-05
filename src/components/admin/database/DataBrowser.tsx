@@ -133,7 +133,7 @@ export const DataBrowser = ({ tables }: DataBrowserProps) => {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search in all columns..."
-                            className="pl-9 pr-4 py-2 border rounded-lg text-sm bg-white/[0.03] focus:outline-none focus:ring-2 focus:ring-[#0D9488] w-64"
+                            className="pl-9 pr-4 py-2 border border-white/[0.08] rounded-lg text-sm text-white bg-white/[0.03] placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#0D9488]/30 w-64"
                         />
                     </div>
                     <button

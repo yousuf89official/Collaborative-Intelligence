@@ -123,9 +123,9 @@ export const CreateSubCampaignDialog = ({ brandId, parentId, parentName, open, o
                                 <SelectTrigger className="col-span-3 bg-white/5 border-white/10 text-white">
                                     <SelectValue placeholder="Select Service" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#1a1a1a] border-white/10 text-white h-[200px]">
+                                <SelectContent className="bg-[#0a0f1a] border-white/10 h-[200px]">
                                     {services.map(svc => (
-                                        <SelectItem key={svc.id} value={svc.id}>
+                                        <SelectItem key={svc.id} value={svc.id} className="text-white/70 focus:bg-white/[0.08] focus:text-white">
                                             {svc.name}
                                         </SelectItem>
                                     ))}
@@ -142,9 +142,9 @@ export const CreateSubCampaignDialog = ({ brandId, parentId, parentName, open, o
                                 <SelectTrigger className="col-span-3 bg-white/5 border-white/10 text-white">
                                     <SelectValue placeholder="Select Objective" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#1a1a1a] border-white/10 text-white">
+                                <SelectContent className="bg-[#0a0f1a] border-white/10">
                                     {objectives.map(obj => (
-                                        <SelectItem key={obj.id} value={obj.id}>
+                                        <SelectItem key={obj.id} value={obj.id} className="text-white/70 focus:bg-white/[0.08] focus:text-white">
                                             {obj.name}
                                         </SelectItem>
                                     ))}

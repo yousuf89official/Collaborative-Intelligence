@@ -54,22 +54,25 @@ const CHANNEL_WEIGHTS: Record<string, number> = {
 
 // ─── Formatting Helpers ──────────────────────────────────────────────────────
 
-const formatIDR = (value: string): string => {
-    const number = value.replace(/[^\d]/g, '');
+const formatIDR = (value: string | number): string => {
+    const str = String(value || '');
+    const number = str.replace(/[^\d]/g, '');
     if (!number) return '';
     return `IDR ${parseInt(number).toLocaleString('id-ID')}`;
 };
 
-const formatNumber = (value: string): string => {
-    const number = value.replace(/[^\d,]/g, '');
+const formatNumber = (value: string | number): string => {
+    const str = String(value || '');
+    const number = str.replace(/[^\d,]/g, '');
     if (!number) return '';
     const parts = number.split(',');
     parts[0] = parseInt(parts[0] || '0').toLocaleString('id-ID');
     return parts.join(',');
 };
 
-const parseNum = (val: string | undefined): number => {
-    if (!val) return 0;
+const parseNum = (val: string | number | undefined): number => {
+    if (val === undefined || val === null || val === '') return 0;
+    if (typeof val === 'number') return val;
     return parseFloat(val.replace(/\./g, '').replace(',', '.') || '0');
 };
 

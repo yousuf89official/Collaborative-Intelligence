@@ -182,9 +182,9 @@ export const CreateBrandModal = ({ isOpen, onClose, onCreate, industries }: any)
                                     setFormData({ ...formData, industryId: e.target.value, industrySubTypeId: '' });
                                 }}
                             >
-                                <option value="">Select Sector</option>
+                                <option value="" className="bg-[#0a0f1a] text-white">Select Sector</option>
                                 {industries.map((ind: any) => (
-                                    <option key={ind.id} value={ind.id}>{ind.name}</option>
+                                    <option key={ind.id} value={ind.id} className="bg-[#0a0f1a] text-white">{ind.name}</option>
                                 ))}
                             </SelectWrapper>
                         </div>
@@ -196,9 +196,9 @@ export const CreateBrandModal = ({ isOpen, onClose, onCreate, industries }: any)
                                 value={formData.industrySubTypeId}
                                 onChange={(e: any) => setFormData({ ...formData, industrySubTypeId: e.target.value })}
                             >
-                                <option value="">Select Sub-Type</option>
+                                <option value="" className="bg-[#0a0f1a] text-white">Select Sub-Type</option>
                                 {availableSubTypes.map((sub: any) => (
-                                    <option key={sub.id} value={sub.id}>{sub.name}</option>
+                                    <option key={sub.id} value={sub.id} className="bg-[#0a0f1a] text-white">{sub.name}</option>
                                 ))}
                             </SelectWrapper>
                         </div>
@@ -208,10 +208,10 @@ export const CreateBrandModal = ({ isOpen, onClose, onCreate, industries }: any)
                                 value={formData.defaultCurrency}
                                 onChange={(e: any) => setFormData({ ...formData, defaultCurrency: e.target.value })}
                             >
-                                <option value="USD">USD - US Dollar</option>
-                                <option value="IDR">IDR - Rupiah</option>
-                                <option value="SGD">SGD - Singapore Dollar</option>
-                                <option value="MYR">MYR - Ringgit</option>
+                                <option value="USD" className="bg-[#0a0f1a] text-white">USD - US Dollar</option>
+                                <option value="IDR" className="bg-[#0a0f1a] text-white">IDR - Rupiah</option>
+                                <option value="SGD" className="bg-[#0a0f1a] text-white">SGD - Singapore Dollar</option>
+                                <option value="MYR" className="bg-[#0a0f1a] text-white">MYR - Ringgit</option>
                             </SelectWrapper>
                         </div>
                         <div className="col-span-2 space-y-2">

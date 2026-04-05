@@ -130,10 +130,10 @@ export function IntelligencePanel({ brandId }: { brandId: string }) {
                 </div>
                 <div className="flex items-center gap-2">
                     <select value={days} onChange={e => setDays(Number(e.target.value))} className="text-[10px] px-2 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-white/60 focus:outline-none">
-                        <option value={7}>7 days</option>
-                        <option value={14}>14 days</option>
-                        <option value={30}>30 days</option>
-                        <option value={90}>90 days</option>
+                        <option value={7} className="bg-[#0a0f1a] text-white">7 days</option>
+                        <option value={14} className="bg-[#0a0f1a] text-white">14 days</option>
+                        <option value={30} className="bg-[#0a0f1a] text-white">30 days</option>
+                        <option value={90} className="bg-[#0a0f1a] text-white">90 days</option>
                     </select>
                     <button onClick={fetchAll} className="p-1.5 rounded-lg hover:bg-white/[0.04] text-white/30 hover:text-white transition-colors">
                         <RefreshCw className="h-3.5 w-3.5" />

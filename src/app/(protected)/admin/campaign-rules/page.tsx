@@ -345,9 +345,9 @@ export default function CampaignRulesPage() {
                             <SelectTrigger className="bg-white/[0.04] border-white/10 text-white">
                                 <SelectValue placeholder="Select campaign" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#162032] border-white/10">
+                            <SelectContent className="bg-[#0a0f1a] border-white/10">
                                 {campaigns.map(c => (
-                                    <SelectItem key={c.id} value={c.id} className="text-white/70">
+                                    <SelectItem key={c.id} value={c.id} className="text-white/70 focus:bg-white/[0.08] focus:text-white">
                                         {c.name}
                                     </SelectItem>
                                 ))}
@@ -386,7 +386,7 @@ export default function CampaignRulesPage() {
                                 <SelectTrigger className="bg-white/[0.04] border-white/10 text-white text-xs">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#162032] border-white/10">
+                                <SelectContent className="bg-[#0a0f1a] border-white/10">
                                     {(Object.keys(METRIC_LABELS) as Metric[]).map(m => (
                                         <SelectItem key={m} value={m} className="text-white/70 text-xs">{METRIC_LABELS[m]}</SelectItem>
                                     ))}
@@ -396,7 +396,7 @@ export default function CampaignRulesPage() {
                                 <SelectTrigger className="bg-white/[0.04] border-white/10 text-white text-xs">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#162032] border-white/10">
+                                <SelectContent className="bg-[#0a0f1a] border-white/10">
                                     {(Object.keys(OPERATOR_LABELS) as Operator[]).map(o => (
                                         <SelectItem key={o} value={o} className="text-white/70 text-xs">{OPERATOR_LABELS[o]}</SelectItem>
                                     ))}
@@ -413,7 +413,7 @@ export default function CampaignRulesPage() {
                                 <SelectTrigger className="bg-white/[0.04] border-white/10 text-white text-xs">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#162032] border-white/10">
+                                <SelectContent className="bg-[#0a0f1a] border-white/10">
                                     {(Object.keys(WINDOW_LABELS) as Window[]).map(w => (
                                         <SelectItem key={w} value={w} className="text-white/70 text-xs">{WINDOW_LABELS[w]}</SelectItem>
                                     ))}
@@ -429,9 +429,9 @@ export default function CampaignRulesPage() {
                             <SelectTrigger className="bg-white/[0.04] border-white/10 text-white">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#162032] border-white/10">
+                            <SelectContent className="bg-[#0a0f1a] border-white/10">
                                 {(Object.keys(ACTION_LABELS) as ActionType[]).map(a => (
-                                    <SelectItem key={a} value={a} className="text-white/70">{ACTION_LABELS[a]}</SelectItem>
+                                    <SelectItem key={a} value={a} className="text-white/70 focus:bg-white/[0.08] focus:text-white">{ACTION_LABELS[a]}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -458,7 +458,7 @@ export default function CampaignRulesPage() {
                                     <SelectTrigger className="w-[120px] bg-white/[0.04] border-white/10 text-white text-xs">
                                         <SelectValue />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-[#162032] border-white/10">
+                                    <SelectContent className="bg-[#0a0f1a] border-white/10">
                                         <SelectItem value="percent" className="text-white/70 text-xs">Percent</SelectItem>
                                         <SelectItem value="absolute" className="text-white/70 text-xs">Absolute</SelectItem>
                                     </SelectContent>
@@ -609,10 +609,10 @@ export default function CampaignRulesPage() {
                             <SelectTrigger className="w-[200px] bg-white/[0.04] border-white/10 text-white">
                                 <SelectValue placeholder="All Campaigns" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#162032] border-white/10">
-                                <SelectItem value="all" className="text-white/70">All Campaigns</SelectItem>
+                            <SelectContent className="bg-[#0a0f1a] border-white/10">
+                                <SelectItem value="all" className="text-white/70 focus:bg-white/[0.08] focus:text-white">All Campaigns</SelectItem>
                                 {campaigns.map(c => (
-                                    <SelectItem key={c.id} value={c.id} className="text-white/70">{c.name}</SelectItem>
+                                    <SelectItem key={c.id} value={c.id} className="text-white/70 focus:bg-white/[0.08] focus:text-white">{c.name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>

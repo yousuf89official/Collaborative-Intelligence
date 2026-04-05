@@ -98,9 +98,9 @@ export const CreateCampaignDialog = ({ brandId, open, onOpenChange, onSuccess }:
                                 <SelectTrigger className="col-span-3 bg-white/[0.04] border-white/10 text-white">
                                     <SelectValue placeholder="Select Market" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-white/[0.04] border-white/10 text-white">
+                                <SelectContent className="bg-[#0a0f1a] border-white/10">
                                     {markets.map(market => (
-                                        <SelectItem key={market.id} value={market.id}>
+                                        <SelectItem key={market.id} value={market.id} className="text-white/70 focus:bg-white/[0.08] focus:text-white">
                                             {market.name} ({market.code})
                                         </SelectItem>
                                     ))}

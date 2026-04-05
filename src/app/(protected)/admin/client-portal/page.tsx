@@ -613,12 +613,12 @@ export default function ClientPortalPage() {
                         <div className="space-y-2">
                             <Label className="text-white/60 text-xs">Brand</Label>
                             <Select value={shareBrandId} onValueChange={setShareBrandId}>
-                                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                                <SelectTrigger className="bg-white/[0.04] border-white/10 text-white">
                                     <SelectValue placeholder="Select brand" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#0F1629] border-white/10">
+                                <SelectContent className="bg-[#0a0f1a] border-white/10">
                                     {brands.map(b => (
-                                        <SelectItem key={b.id} value={b.id} className="text-white hover:bg-white/5">
+                                        <SelectItem key={b.id} value={b.id} className="text-white/70 focus:bg-white/[0.08] focus:text-white">
                                             {b.name}
                                         </SelectItem>
                                     ))}
@@ -628,13 +628,13 @@ export default function ClientPortalPage() {
                         <div className="space-y-2">
                             <Label className="text-white/60 text-xs">Link Type</Label>
                             <Select value={shareLinkType} onValueChange={setShareLinkType}>
-                                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                                <SelectTrigger className="bg-white/[0.04] border-white/10 text-white">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#0F1629] border-white/10">
-                                    <SelectItem value="dashboard" className="text-white hover:bg-white/5">Dashboard</SelectItem>
-                                    <SelectItem value="report" className="text-white hover:bg-white/5">Report</SelectItem>
-                                    <SelectItem value="campaign" className="text-white hover:bg-white/5">Campaign</SelectItem>
+                                <SelectContent className="bg-[#0a0f1a] border-white/10">
+                                    <SelectItem value="dashboard" className="text-white/70 focus:bg-white/[0.08] focus:text-white">Dashboard</SelectItem>
+                                    <SelectItem value="report" className="text-white/70 focus:bg-white/[0.08] focus:text-white">Report</SelectItem>
+                                    <SelectItem value="campaign" className="text-white/70 focus:bg-white/[0.08] focus:text-white">Campaign</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -745,12 +745,12 @@ export default function ClientPortalPage() {
                         <div className="space-y-2">
                             <Label className="text-white/60 text-xs">Brand</Label>
                             <Select value={reportBrandId} onValueChange={setReportBrandId}>
-                                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                                <SelectTrigger className="bg-white/[0.04] border-white/10 text-white">
                                     <SelectValue placeholder="Select brand" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#0F1629] border-white/10">
+                                <SelectContent className="bg-[#0a0f1a] border-white/10">
                                     {brands.map(b => (
-                                        <SelectItem key={b.id} value={b.id} className="text-white hover:bg-white/5">
+                                        <SelectItem key={b.id} value={b.id} className="text-white/70 focus:bg-white/[0.08] focus:text-white">
                                             {b.name}
                                         </SelectItem>
                                     ))}
@@ -760,13 +760,13 @@ export default function ClientPortalPage() {
                         <div className="space-y-2">
                             <Label className="text-white/60 text-xs">Frequency</Label>
                             <Select value={reportFrequency} onValueChange={setReportFrequency}>
-                                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                                <SelectTrigger className="bg-white/[0.04] border-white/10 text-white">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#0F1629] border-white/10">
-                                    <SelectItem value="daily" className="text-white hover:bg-white/5">Daily</SelectItem>
-                                    <SelectItem value="weekly" className="text-white hover:bg-white/5">Weekly</SelectItem>
-                                    <SelectItem value="monthly" className="text-white hover:bg-white/5">Monthly</SelectItem>
+                                <SelectContent className="bg-[#0a0f1a] border-white/10">
+                                    <SelectItem value="daily" className="text-white/70 focus:bg-white/[0.08] focus:text-white">Daily</SelectItem>
+                                    <SelectItem value="weekly" className="text-white/70 focus:bg-white/[0.08] focus:text-white">Weekly</SelectItem>
+                                    <SelectItem value="monthly" className="text-white/70 focus:bg-white/[0.08] focus:text-white">Monthly</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

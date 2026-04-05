@@ -176,22 +176,22 @@ export const EditBrandModal = ({ isOpen, onClose, brand, industries, onUpdated }
                         <div className="space-y-2">
                             <Label>Industry Sector</Label>
                             <SelectWrapper value={formData.industryId} onChange={(e: any) => setFormData({ ...formData, industryId: e.target.value, industrySubTypeId: '' })}>
-                                <option value="">Select Sector</option>
-                                {industries.map((ind: any) => <option key={ind.id} value={ind.id}>{ind.name}</option>)}
+                                <option value="" className="bg-[#0a0f1a] text-white">Select Sector</option>
+                                {industries.map((ind: any) => <option key={ind.id} value={ind.id} className="bg-[#0a0f1a] text-white">{ind.name}</option>)}
                             </SelectWrapper>
                         </div>
                         <div className="space-y-2">
                             <Label>Sub-Category</Label>
                             <SelectWrapper disabled={!formData.industryId} value={formData.industrySubTypeId} onChange={(e: any) => setFormData({ ...formData, industrySubTypeId: e.target.value })}>
-                                <option value="">Select Sub-Type</option>
-                                {availableSubTypes.map((sub: any) => <option key={sub.id} value={sub.id}>{sub.name}</option>)}
+                                <option value="" className="bg-[#0a0f1a] text-white">Select Sub-Type</option>
+                                {availableSubTypes.map((sub: any) => <option key={sub.id} value={sub.id} className="bg-[#0a0f1a] text-white">{sub.name}</option>)}
                             </SelectWrapper>
                         </div>
 
                         <div className="space-y-2">
                             <Label>Default Currency</Label>
                             <SelectWrapper value={formData.defaultCurrency} onChange={(e: any) => setFormData({ ...formData, defaultCurrency: e.target.value })}>
-                                {CURRENCIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                                {CURRENCIES.map(c => <option key={c.value} value={c.value} className="bg-[#0a0f1a] text-white">{c.label}</option>)}
                             </SelectWrapper>
                         </div>
                         <div className="space-y-2">

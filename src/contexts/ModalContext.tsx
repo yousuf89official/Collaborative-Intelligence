@@ -113,7 +113,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
         <ModalContext.Provider value={{ openModal, closeModal, isOpen, showAlert, showConfirm }}>
             {children}
             <Dialog open={isOpen} onOpenChange={(open) => !open && closeModal()}>
-                <DialogContent className={`bg-brand-surface border-brand-border text-brand-text-primary overflow-y-auto max-h-[90vh] ${maxWidthClass}`}>
+                <DialogContent className={`bg-[#0a0f1a] border-white/[0.08] text-white overflow-y-auto max-h-[90vh] ${maxWidthClass}`}>
                     {content}
                 </DialogContent>
             </Dialog>

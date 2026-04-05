@@ -57,7 +57,7 @@ export function GlobalDialog({
                     <div className={`p-2 rounded-full border ${iconBg[type]}`}>
                         {icons[type]}
                     </div>
-                    <DialogTitle className="text-xl font-bold text-brand-text-primary">
+                    <DialogTitle className="text-xl font-bold text-white">
                         {title}
                     </DialogTitle>
                 </div>
@@ -70,7 +70,7 @@ export function GlobalDialog({
                     <Button
                         type="button"
                         variant="secondary"
-                        className="bg-brand-surface-highlight hover:bg-brand-border text-white"
+                        className="bg-white/[0.06] hover:bg-white/[0.1] text-white"
                         onClick={onCancel}
                     >
                         {cancelText}

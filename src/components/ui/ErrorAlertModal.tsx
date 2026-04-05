@@ -28,13 +28,13 @@ export function ErrorAlertModal({
 }: ErrorAlertModalProps) {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md bg-brand-surface border-brand-border text-brand-text-primary">
+            <DialogContent className="sm:max-w-md bg-[#0a0f1a] border-white/[0.08] text-white">
                 <DialogHeader>
                     <div className="flex items-center gap-3">
                         <div className="p-2 rounded-full bg-red-500/10 border border-red-500/20">
                             <AlertTriangle className="h-6 w-6 text-red-500" />
                         </div>
-                        <DialogTitle className="text-xl font-bold text-brand-text-primary">
+                        <DialogTitle className="text-xl font-bold text-white">
                             {title}
                         </DialogTitle>
                     </div>
@@ -46,7 +46,7 @@ export function ErrorAlertModal({
                     <Button
                         type="button"
                         variant="secondary"
-                        className="flex-1 bg-brand-surface-highlight hover:bg-brand-border text-white"
+                        className="flex-1 bg-white/[0.06] hover:bg-white/[0.1] text-white"
                         onClick={onClose}
                     >
                         Dismiss
