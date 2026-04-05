@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Service, type Campaign, type Brand } from '@/services/api';
+import { Service, api, type Campaign, type Brand } from '@/services/api';
 import { PerformanceWidgets } from '@/components/brands/PerformanceWidgets';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { Card, CardContent } from '@/components/ui/card';
@@ -103,8 +103,8 @@ export default function DashboardPage() {
   const fetchRecentCampaigns = async () => {
     try {
       const [campaigns, brands] = await Promise.all([
-        Service.campaigns.getAll(),
-        Service.brands.getAll(),
+        api.campaigns.getAll({}),
+        api.brands.getAll(),
       ]);
       const brandMap = new Map<string, string>(
         brands.map((b: Brand) => [b.id, b.name])
