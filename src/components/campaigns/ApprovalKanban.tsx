@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     DndContext,
     DragOverlay,
@@ -109,29 +110,52 @@ interface CampaignCardData {
     endDate?: string;
 }
 
-function DraggableCampaignCard({ campaign }: { campaign: CampaignCardData }) {
+function DraggableCampaignCard({ campaign, onNavigate, activeBrandFilter }: { campaign: CampaignCardData; onNavigate: (id: string) => void; activeBrandFilter?: string }) {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: campaign.id,
         data: { campaign },
     });
+    const justDragged = useRef(false);
 
     const style = {
         transform: CSS.Translate.toString(transform),
         opacity: isDragging ? 0.4 : 1,
     };
 
+    // Track when a drag actually occurred so we can suppress navigation
+    const handlePointerUp = useCallback(() => {
+        if (isDragging) {
+            justDragged.current = true;
+        }
+    }, [isDragging]);
+
+    const handleCardClick = useCallback(() => {
+        if (justDragged.current) {
+            justDragged.current = false;
+            return;
+        }
+        onNavigate(campaign.id);
+    }, [campaign.id, onNavigate]);
+
     return (
-        <div ref={setNodeRef} style={style} {...attributes}
-            className="bg-white/[0.06] border border-white/[0.08] rounded-lg p-3 cursor-grab active:cursor-grabbing hover:bg-white/[0.08] transition-colors group"
+        <div ref={setNodeRef} style={style} {...attributes} onPointerUp={handlePointerUp}
+            className="bg-white/[0.06] border border-white/[0.08] rounded-lg p-3 hover:border-white/[0.12] hover:bg-white/[0.08] transition-colors group"
         >
             <div className="flex items-start gap-2">
-                <div {...listeners} className="mt-0.5 text-white/20 group-hover:text-white/40 transition-colors">
+                <div {...listeners} className="mt-0.5 text-white/20 group-hover:text-white/40 transition-colors cursor-grab active:cursor-grabbing">
                     <GripVertical className="w-3.5 h-3.5" />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 cursor-pointer" onClick={handleCardClick}>
                     <div className="text-sm font-semibold text-white truncate">{campaign.name}</div>
                     {campaign.brandName && (
-                        <div className="text-xs text-white/40 mt-0.5">{campaign.brandName}</div>
+                        <div className="text-xs text-white/40 mt-0.5 flex items-center gap-1.5">
+                            {campaign.brandName}
+                            {activeBrandFilter && activeBrandFilter === campaign.brandName && (
+                                <span className="text-[9px] px-1 py-0.5 rounded bg-[#0D9488]/15 text-[#0D9488] font-medium leading-none">
+                                    {activeBrandFilter}
+                                </span>
+                            )}
+                        </div>
                     )}
                     <div className="flex items-center gap-2 mt-2">
                         {campaign.budgetPlanned ? (
@@ -144,6 +168,9 @@ function DraggableCampaignCard({ campaign }: { campaign: CampaignCardData }) {
                                 {new Date(campaign.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                             </span>
                         )}
+                    </div>
+                    <div className="text-[10px] text-white/0 group-hover:text-white/30 hover:!text-[#0D9488] transition-colors mt-1.5">
+                        View →
                     </div>
                 </div>
             </div>
@@ -162,7 +189,7 @@ function CampaignCardOverlay({ campaign }: { campaign: CampaignCardData }) {
 
 // ─── Droppable Column ───────────────────────────────────────────────────────
 
-function KanbanColumn({ column, campaigns, isOver }: { column: StatusColumn; campaigns: CampaignCardData[]; isOver: boolean }) {
+function KanbanColumn({ column, campaigns, isOver, onNavigate, activeBrandFilter }: { column: StatusColumn; campaigns: CampaignCardData[]; isOver: boolean; onNavigate: (id: string) => void; activeBrandFilter?: string }) {
     const { setNodeRef } = useDroppable({ id: column.id });
     const Icon = column.icon;
 
@@ -193,7 +220,7 @@ function KanbanColumn({ column, campaigns, isOver }: { column: StatusColumn; cam
                     </div>
                 )}
                 {campaigns.map(c => (
-                    <DraggableCampaignCard key={c.id} campaign={c} />
+                    <DraggableCampaignCard key={c.id} campaign={c} onNavigate={onNavigate} activeBrandFilter={activeBrandFilter} />
                 ))}
             </div>
         </div>
@@ -205,12 +232,15 @@ function KanbanColumn({ column, campaigns, isOver }: { column: StatusColumn; cam
 interface ApprovalKanbanProps {
     campaigns: CampaignCardData[];
     onStatusChange: () => void;
+    activeBrandFilter?: string;
 }
 
-export function ApprovalKanban({ campaigns, onStatusChange }: ApprovalKanbanProps) {
+export function ApprovalKanban({ campaigns, onStatusChange, activeBrandFilter }: ApprovalKanbanProps) {
+    const router = useRouter();
     const [activeCard, setActiveCard] = useState<CampaignCardData | null>(null);
     const [overId, setOverId] = useState<string | null>(null);
     const [updating, setUpdating] = useState<string | null>(null);
+    const justDraggedGlobal = useRef(false);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -225,9 +255,16 @@ export function ApprovalKanban({ campaigns, onStatusChange }: ApprovalKanbanProp
         setOverId(event.over?.id?.toString() || null);
     }, []);
 
+    const handleNavigate = useCallback((campaignId: string) => {
+        router.push(`/admin/campaign-detail/${campaignId}`);
+    }, [router]);
+
     const handleDragEnd = useCallback(async (event: DragEndEvent) => {
         setActiveCard(null);
         setOverId(null);
+        justDraggedGlobal.current = true;
+        // Reset after a tick so click handlers can check it
+        setTimeout(() => { justDraggedGlobal.current = false; }, 0);
 
         const { active, over } = event;
         if (!over) return;
@@ -277,6 +314,8 @@ export function ApprovalKanban({ campaigns, onStatusChange }: ApprovalKanbanProp
                         column={col}
                         campaigns={grouped[col.id] || []}
                         isOver={overId === col.id}
+                        onNavigate={handleNavigate}
+                        activeBrandFilter={activeBrandFilter}
                     />
                 ))}
             </div>

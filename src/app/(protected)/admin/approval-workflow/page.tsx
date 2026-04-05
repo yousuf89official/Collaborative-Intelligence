@@ -139,7 +139,11 @@ export default function ApprovalWorkflowPage() {
                     <p className="text-white/30 text-sm">No campaigns found. Create a campaign first.</p>
                 </div>
             ) : (
-                <ApprovalKanban campaigns={kanbanData} onStatusChange={handleRefresh} />
+                <ApprovalKanban
+                    campaigns={kanbanData}
+                    onStatusChange={handleRefresh}
+                    activeBrandFilter={selectedBrandId !== 'all' ? brands.find(b => b.id === selectedBrandId)?.name : undefined}
+                />
             )}
 
             {/* Legend */}
