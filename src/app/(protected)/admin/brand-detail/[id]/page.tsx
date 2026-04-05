@@ -20,7 +20,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import BudgetPacingWidget from '@/components/campaigns/BudgetPacingWidget';
+import { BudgetPacingWidget } from '@/components/campaigns/BudgetPacingWidget';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
