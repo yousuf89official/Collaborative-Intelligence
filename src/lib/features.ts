@@ -15,6 +15,7 @@ export const ALL_FEATURES: Feature[] = [
     { key: 'brands', label: 'Brands', section: 'Operations', href: '/brands' },
     { key: 'ave-calculator', label: 'Media Analyzer', section: 'Operations', href: '/ave-calculator' },
     { key: 'campaigns', label: 'Campaigns', section: 'Operations', href: '/admin/brand-campaign-settings' },
+    { key: 'campaign-templates', label: 'Campaign Templates', section: 'Operations', href: '/admin/campaign-templates' },
     { key: 'approval-workflow', label: 'Approval Workflow', section: 'Operations', href: '/admin/approval-workflow' },
     { key: 'reports', label: 'Reports', section: 'Operations', href: '/reports' },
     // Public Site
