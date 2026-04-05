@@ -27,6 +27,7 @@ export const ALL_FEATURES: Feature[] = [
     // Growth & Revenue
     { key: 'future-products', label: 'Future Products', section: 'Growth & Revenue', href: '/admin/future-products' },
     { key: 'analytics', label: 'Analytics & Tracking', section: 'Growth & Revenue', href: '/admin/analytics' },
+    { key: 'client-portal', label: 'Client Portal', section: 'Growth & Revenue', href: '/admin/client-portal' },
     { key: 'whitelabel', label: 'Whitelabel System', section: 'Growth & Revenue', href: '/admin/whitelabel' },
     { key: 'benchmarks', label: 'Benchmarks', section: 'Growth & Revenue', href: '/admin/benchmarks' },
     { key: 'attribution', label: 'Attribution', section: 'Growth & Revenue', href: '/admin/attribution' },
