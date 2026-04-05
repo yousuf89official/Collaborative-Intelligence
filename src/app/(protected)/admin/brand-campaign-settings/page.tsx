@@ -184,6 +184,7 @@ export default function BrandCampaignSettingsPage() {
                             onDelete={(id) => handleDeleteCampaign(id)}
                             onAddSubCampaign={handleAddSubCampaign}
                             onSelectCampaign={(c) => toast.info(`Selected ${c.name}`)}
+                            onRefresh={fetchCampaigns}
                         />
                     )}
                 </div>

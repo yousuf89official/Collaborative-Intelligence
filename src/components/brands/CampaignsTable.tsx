@@ -3,7 +3,8 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, ChevronRight, ChevronDown, Plus } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { MoreHorizontal, Pencil, Trash2, ChevronRight, ChevronDown, Plus, Pause, Play, Archive, X } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import {
     DropdownMenu,
@@ -12,8 +13,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Campaign } from '@/services/api';
+import { api, type Campaign } from '@/services/api';
 import { useState, Fragment } from 'react';
+import { toast } from 'sonner';
 
 interface CampaignsTableProps {
     data: Campaign[];
@@ -21,15 +23,63 @@ interface CampaignsTableProps {
     onDelete: (campaignId: string) => void;
     onAddSubCampaign: (parentId: string) => void;
     onSelectCampaign: (campaign: Campaign) => void;
+    onRefresh?: () => void;
 }
 
-export const CampaignsTable = ({ data, onConfigure, onDelete, onAddSubCampaign, onSelectCampaign }: CampaignsTableProps) => {
+export const CampaignsTable = ({ data, onConfigure, onDelete, onAddSubCampaign, onSelectCampaign, onRefresh }: CampaignsTableProps) => {
     // Group campaigns by parent
     const parents = data.filter(c => !c.parentId);
     const getChildren = (parentId: string) => data.filter(c => c.parentId === parentId);
 
     // Toggle state for expanding rows
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+    // Bulk selection state
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [bulkLoading, setBulkLoading] = useState(false);
+
+    const allParentIds = parents.map(p => p.id);
+    const allSelected = parents.length > 0 && allParentIds.every(id => selectedIds.has(id));
+    const someSelected = allParentIds.some(id => selectedIds.has(id));
+
+    const toggleSelectAll = () => {
+        if (allSelected) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(allParentIds));
+        }
+    };
+
+    const toggleSelect = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    };
+
+    const handleBulkAction = async (action: string) => {
+        if (action === 'archive' && !window.confirm(`Archive ${selectedIds.size} campaign(s)? This will remove them from active views.`)) {
+            return;
+        }
+        setBulkLoading(true);
+        try {
+            await api.campaigns.bulkAction(action, [...selectedIds]);
+            toast.success(`${selectedIds.size} campaign(s) ${action === 'pause' ? 'paused' : action === 'activate' ? 'activated' : 'archived'} successfully`);
+            setSelectedIds(new Set());
+            onRefresh?.();
+        } catch (error) {
+            console.error('Bulk action failed:', error);
+            toast.error(`Failed to ${action} campaigns`);
+        } finally {
+            setBulkLoading(false);
+        }
+    };
 
     const toggleExpand = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -81,9 +131,62 @@ export const CampaignsTable = ({ data, onConfigure, onDelete, onAddSubCampaign, 
 
     return (
         <div className="rounded-xl border border-white/10 bg-white/[0.04] shadow-sm overflow-hidden">
+            {/* Bulk Actions Toolbar */}
+            {selectedIds.size > 0 && (
+                <div className="flex items-center justify-between gap-4 px-4 py-3 bg-[#0D9488]/10 border-b border-[#0D9488]/20 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <span className="text-sm font-semibold text-[#0D9488]">
+                        {selectedIds.size} campaign{selectedIds.size > 1 ? 's' : ''} selected
+                    </span>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={bulkLoading}
+                            className="h-8 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 hover:border-yellow-500/40 bg-transparent"
+                            onClick={() => handleBulkAction('pause')}
+                        >
+                            <Pause className="h-3.5 w-3.5 mr-1.5" /> Pause
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={bulkLoading}
+                            className="h-8 border-green-500/30 text-green-400 hover:bg-green-500/10 hover:border-green-500/40 bg-transparent"
+                            onClick={() => handleBulkAction('activate')}
+                        >
+                            <Play className="h-3.5 w-3.5 mr-1.5" /> Activate
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={bulkLoading}
+                            className="h-8 border-white/10 text-white/50 hover:bg-white/[0.06] hover:border-white/20 bg-transparent"
+                            onClick={() => handleBulkAction('archive')}
+                        >
+                            <Archive className="h-3.5 w-3.5 mr-1.5" /> Archive
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            disabled={bulkLoading}
+                            className="h-8 text-white/40 hover:text-white hover:bg-white/[0.06]"
+                            onClick={() => setSelectedIds(new Set())}
+                        >
+                            <X className="h-3.5 w-3.5 mr-1.5" /> Clear
+                        </Button>
+                    </div>
+                </div>
+            )}
             <Table>
                 <TableHeader>
                     <TableRow className="border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.06]">
+                        <TableHead className="w-[40px] px-3">
+                            <Checkbox
+                                checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                                onCheckedChange={toggleSelectAll}
+                                className="border-white/20 data-[state=checked]:bg-[#0D9488] data-[state=checked]:border-[#0D9488]"
+                            />
+                        </TableHead>
                         <TableHead className="w-[40px]"></TableHead>
                         <TableHead className="w-[300px] text-white/50 font-semibold">Campaign / Service</TableHead>
                         <TableHead className="text-white/50 font-semibold">Market</TableHead>
@@ -97,7 +200,7 @@ export const CampaignsTable = ({ data, onConfigure, onDelete, onAddSubCampaign, 
                 <TableBody>
                     {parents.length === 0 && (
                         <TableRow>
-                            <TableCell colSpan={8} className="text-center py-12 text-white/40">
+                            <TableCell colSpan={9} className="text-center py-12 text-white/40">
                                 No campaigns found. Create one to get started.
                             </TableCell>
                         </TableRow>
@@ -111,9 +214,26 @@ export const CampaignsTable = ({ data, onConfigure, onDelete, onAddSubCampaign, 
                             <Fragment key={parent.id}>
                                 {/* PARENT ROW */}
                                 <TableRow
-                                    className="border-white/[0.06] hover:bg-white/[0.06] cursor-pointer transition-colors group"
+                                    className={`border-white/[0.06] hover:bg-white/[0.06] cursor-pointer transition-colors group ${selectedIds.has(parent.id) ? 'bg-[#0D9488]/5' : ''}`}
                                     onClick={() => onSelectCampaign(parent)}
                                 >
+                                    <TableCell className="px-3" onClick={(e) => e.stopPropagation()}>
+                                        <Checkbox
+                                            checked={selectedIds.has(parent.id)}
+                                            onCheckedChange={() => {
+                                                setSelectedIds(prev => {
+                                                    const next = new Set(prev);
+                                                    if (next.has(parent.id)) {
+                                                        next.delete(parent.id);
+                                                    } else {
+                                                        next.add(parent.id);
+                                                    }
+                                                    return next;
+                                                });
+                                            }}
+                                            className="border-white/20 data-[state=checked]:bg-[#0D9488] data-[state=checked]:border-[#0D9488]"
+                                        />
+                                    </TableCell>
                                     <TableCell>
                                         {children.length > 0 && (
                                             <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-white/40 hover:text-white hover:bg-white/[0.08]" onClick={(e) => toggleExpand(parent.id, e)}>
@@ -175,6 +295,7 @@ export const CampaignsTable = ({ data, onConfigure, onDelete, onAddSubCampaign, 
                                         className="border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.06] cursor-pointer"
                                         onClick={() => onSelectCampaign(child)}
                                     >
+                                        <TableCell className="px-3"></TableCell>
                                         <TableCell></TableCell>
                                         <TableCell className="pl-6 relative">
                                             <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-white/[0.08]" />
