@@ -17,6 +17,7 @@ export const ALL_FEATURES: Feature[] = [
     { key: 'campaigns', label: 'Campaigns', section: 'Operations', href: '/admin/brand-campaign-settings' },
     { key: 'campaign-templates', label: 'Campaign Templates', section: 'Operations', href: '/admin/campaign-templates' },
     { key: 'approval-workflow', label: 'Approval Workflow', section: 'Operations', href: '/admin/approval-workflow' },
+    { key: 'campaign-rules', label: 'Campaign Rules', section: 'Operations', href: '/admin/campaign-rules' },
     { key: 'reports', label: 'Reports', section: 'Operations', href: '/reports' },
     // Public Site
     { key: 'cms', label: 'CMS Manager', section: 'Public Site', href: '/admin/cms' },
