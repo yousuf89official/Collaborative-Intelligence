@@ -13,17 +13,7 @@ import { api, Brand, Campaign } from '@/services/api';
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface CampaignAutoFillProps {
-    onAutoFill: (data: {
-        brandName: string;
-        campaignName: string;
-        brandId: string;
-        campaignId: string;
-        impressions: number;
-        reach: number;
-        engagement: number;
-        spend: number;
-        channels: string[];
-    }) => void;
+    onAutoFill: (data: Record<string, any>) => void;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

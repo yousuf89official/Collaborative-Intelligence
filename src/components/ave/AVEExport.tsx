@@ -7,13 +7,8 @@ import { TableIcon, PrinterIcon, LinkIcon } from 'lucide-react';
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface AVEExportProps {
-    campaignInfo: {
-        brandName: string;
-        campaignName: string;
-        campaignType: string;
-        objective: string;
-    };
-    results: {
+    campaignInfo: Record<string, string>;
+    results: Record<string, number | undefined> & {
         sovReach?: number;
         sovEngagement?: number;
         are?: number;

@@ -113,16 +113,7 @@ export const MediaAnalyzer = () => {
 
     // ─── Auto-Fill Handler ──────────────────────────────────────────────────
 
-    const handleAutoFill = (data: {
-        brandId: string;
-        campaignId: string;
-        brandName?: string;
-        campaignName?: string;
-        impressions?: string;
-        reach?: string;
-        engagement?: string;
-        channels?: string[];
-    }) => {
+    const handleAutoFill = (data: Record<string, any>) => {
         setBrandId(data.brandId);
         setCampaignId(data.campaignId);
 

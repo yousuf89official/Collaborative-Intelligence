@@ -22,12 +22,7 @@ interface SavedAnalysis {
 
 interface CalculationHistoryProps {
     brandId?: string;
-    onLoad: (analysis: {
-        inputs: Record<string, string>;
-        results: Record<string, string>;
-        aiAnalysis?: string;
-        channels?: string[];
-    }) => void;
+    onLoad: (analysis: any) => void;
 }
 
 function timeAgo(dateStr: string): string {
