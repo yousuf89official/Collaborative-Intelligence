@@ -2,6 +2,7 @@
 
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { CommandPalette } from './CommandPalette';
 import { WidgetDrawer } from '../dashboard/WidgetDrawer';
 import { useState } from 'react';
 
@@ -22,6 +23,7 @@ export const AppShell = ({ children }: AppShellProps) => {
                 </main>
             </div>
             <WidgetDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
+            <CommandPalette />
         </div>
     );
 };

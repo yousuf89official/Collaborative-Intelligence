@@ -1,5 +1,6 @@
 import { useLayout } from '@/contexts/LayoutContext';
 import { NotificationCenter } from './NotificationCenter';
+import { CommandPaletteTrigger } from './CommandPalette';
 
 interface HeaderProps {
     onAddWidget?: () => void;
@@ -16,6 +17,7 @@ export const Header = ({ onAddWidget }: HeaderProps) => {
             {headerContent ? (
                 <div className="w-full flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
                     <div className="flex-1 min-w-0">{headerContent}</div>
+                    <CommandPaletteTrigger />
                     <NotificationCenter />
                 </div>
             ) : (
@@ -24,7 +26,10 @@ export const Header = ({ onAddWidget }: HeaderProps) => {
                         <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-lg shadow-emerald-500/30" />
                         <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">System Active</span>
                     </div>
-                    <NotificationCenter />
+                    <div className="flex items-center gap-2">
+                        <CommandPaletteTrigger />
+                        <NotificationCenter />
+                    </div>
                 </div>
             )}
         </header>
