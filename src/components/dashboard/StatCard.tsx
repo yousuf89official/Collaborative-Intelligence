@@ -1,6 +1,7 @@
-import { ArrowUpRight, ArrowDownRight, type LucideIcon } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, ChevronRight, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
+import Link from 'next/link';
 
 interface StatCardProps {
     label: string;
@@ -9,18 +10,28 @@ interface StatCardProps {
     icon: LucideIcon;
     subValue?: string;
     className?: string;
+    href?: string;
 }
 
-export function StatCard({ label, value, trend, icon: Icon, subValue, className }: StatCardProps) {
+export function StatCard({ label, value, trend, icon: Icon, subValue, className, href }: StatCardProps) {
     const isPositive = trend && trend > 0;
 
-    return (
-        <Card className={cn("bg-card/50 backdrop-blur-sm border-white/5", className)}>
+    const content = (
+        <Card className={cn(
+            "bg-card/50 backdrop-blur-sm border-white/5",
+            href && "cursor-pointer hover:bg-white/[0.08] transition-colors group",
+            className
+        )}>
             <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
                     <p className="text-sm font-medium text-muted-foreground">{label}</p>
-                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                        <Icon size={18} />
+                    <div className="flex items-center gap-2">
+                        <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                            <Icon size={18} />
+                        </div>
+                        {href && (
+                            <ChevronRight size={16} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        )}
                     </div>
                 </div>
 
@@ -43,4 +54,10 @@ export function StatCard({ label, value, trend, icon: Icon, subValue, className 
             </CardContent>
         </Card>
     );
+
+    if (href) {
+        return <Link href={href} className="block">{content}</Link>;
+    }
+
+    return content;
 }
