@@ -10,9 +10,13 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
     Calculator, TrendingUp, DollarSign, BarChart3, Sparkles,
-    Target, Activity, Zap
+    Target, Activity, Zap, Save, Loader2
 } from 'lucide-react';
 import { CampaignInfo } from './CampaignInfo';
+import { CampaignAutoFill } from './CampaignAutoFill';
+import { ChannelBreakdown } from './ChannelBreakdown';
+import { AVEExport } from './AVEExport';
+import { CalculationHistory } from './CalculationHistory';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -29,6 +33,24 @@ interface MetricSelections {
 interface FormData {
     [key: string]: string;
 }
+
+// ─── Channel Weights for Weighted SOV ───────────────────────────────────────
+
+const CHANNEL_WEIGHTS: Record<string, number> = {
+    'instagram': 1.2,
+    'tiktok': 1.2,
+    'youtube': 1.1,
+    'facebook': 1.0,
+    'google-sem': 0.9,
+    'linkedin': 0.8,
+    'display-banner': 0.7,
+    'kol': 1.3,
+    'pr': 1.1,
+    'snack-video': 1.0,
+    'ott-ads': 0.9,
+    'audio': 0.8,
+    'dooh': 0.9,
+};
 
 // ─── Formatting Helpers ──────────────────────────────────────────────────────
 
@@ -67,6 +89,10 @@ export const MediaAnalyzer = () => {
     const [results, setResults] = useState<any>(null);
     const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
     const [aiAnalysis, setAiAnalysis] = useState<string>('');
+    const [brandId, setBrandId] = useState('');
+    const [campaignId, setCampaignId] = useState('');
+    const [channelAVEResults, setChannelAVEResults] = useState<any[]>([]);
+    const [saving, setSaving] = useState(false);
 
     const toggle = (key: keyof MetricSelections) =>
         setSelections((s) => ({ ...s, [key]: !s[key] }));
@@ -83,6 +109,118 @@ export const MediaAnalyzer = () => {
 
     const handleChannelChange = (channel: string, checked: boolean) => {
         setSelectedChannels((prev) => checked ? [...prev, channel] : prev.filter((c) => c !== channel));
+    };
+
+    // ─── Auto-Fill Handler ──────────────────────────────────────────────────
+
+    const handleAutoFill = (data: {
+        brandId: string;
+        campaignId: string;
+        brandName?: string;
+        campaignName?: string;
+        impressions?: string;
+        reach?: string;
+        engagement?: string;
+        channels?: string[];
+    }) => {
+        setBrandId(data.brandId);
+        setCampaignId(data.campaignId);
+
+        const updates: FormData = { ...formData };
+        if (data.brandName) updates.brandName = data.brandName;
+        if (data.campaignName) updates.campaignName = data.campaignName;
+        if (data.impressions) updates.impressions = data.impressions;
+        if (data.reach) updates.totalReach = data.reach;
+        if (data.engagement) updates.engagements = data.engagement;
+        setFormData(updates);
+
+        if (data.channels && data.channels.length > 0) {
+            setSelectedChannels(data.channels);
+        }
+
+        toast.success('Auto-Fill Complete', { description: `Loaded data for ${data.campaignName || data.brandName || 'campaign'}.` });
+    };
+
+    // ─── Channel AVE Handler ────────────────────────────────────────────────
+
+    const handleChannelAVECalculated = (channelResults: any[]) => {
+        setChannelAVEResults(channelResults);
+    };
+
+    // ─── Save Handler ───────────────────────────────────────────────────────
+
+    const handleSave = async () => {
+        if (!brandId) {
+            toast.error('Brand Required', { description: 'Please select a brand via auto-fill or enter a brand name before saving.' });
+            return;
+        }
+
+        setSaving(true);
+        try {
+            const response = await fetch('/api/media-analysis', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    brandId,
+                    campaignId: campaignId || null,
+                    name: formData.campaignName || 'Untitled',
+                    inputs: JSON.stringify(formData),
+                    results: JSON.stringify(results),
+                    aiAnalysis,
+                    channels: JSON.stringify(selectedChannels),
+                }),
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Failed to save');
+            }
+
+            toast.success('Calculation saved');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            toast.error('Save Failed', { description: message });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // ─── Load from History Handler ──────────────────────────────────────────
+
+    const handleLoadFromHistory = (analysis: {
+        inputs: string;
+        results: string;
+        aiAnalysis?: string | null;
+        channels?: string | null;
+        brandId: string;
+        campaignId?: string | null;
+    }) => {
+        try {
+            const loadedInputs = JSON.parse(analysis.inputs);
+            const loadedResults = JSON.parse(analysis.results);
+            const loadedChannels = analysis.channels ? JSON.parse(analysis.channels) : [];
+
+            setFormData(loadedInputs);
+            setResults(loadedResults);
+            if (analysis.aiAnalysis) setAiAnalysis(analysis.aiAnalysis);
+            setSelectedChannels(loadedChannels);
+            setBrandId(analysis.brandId);
+            if (analysis.campaignId) setCampaignId(analysis.campaignId);
+
+            // Restore metric selections based on loaded results
+            setSelections((prev) => ({
+                ...prev,
+                sov: !!(loadedResults.sovReach || loadedResults.sovEngagement || loadedResults.are),
+                ave: !!(loadedResults.impressionAve || loadedResults.engagementAve || loadedResults.videoViewAve),
+                sovExternal: !!(loadedResults.sovReach || loadedResults.sovEngagement),
+                sovInternal: !!(loadedResults.are || loadedResults.ee || loadedResults.taa),
+                weightedAve: !!loadedResults.weightedAve,
+            }));
+
+            toast.success('Analysis Loaded', { description: 'Previous calculation has been restored.' });
+        } catch {
+            toast.error('Load Failed', { description: 'Could not parse saved analysis data.' });
+        }
     };
 
     // ─── Validation ──────────────────────────────────────────────────────────
@@ -139,9 +277,37 @@ export const MediaAnalyzer = () => {
             r.impressionAve = (impressions / 1000 * cpm).toFixed(2);
             r.engagementAve = (engagements * cpe).toFixed(2);
             r.videoViewAve = (videoViews * cpv).toFixed(2);
+
+            // Use per-channel AVE sum if available
+            if (channelAVEResults.length > 0) {
+                const channelSum = channelAVEResults.reduce((sum, ch) => sum + (ch.totalAVE || 0), 0);
+                if (channelSum > 0) {
+                    r.impressionAve = channelSum.toFixed(2);
+                }
+            }
+
             if (selections.weightedAve) {
                 r.weightedAve = (parseFloat(r.impressionAve) + parseFloat(r.engagementAve) + parseFloat(r.videoViewAve)).toFixed(2);
             }
+        }
+
+        // Link SOV & AVE — multiply AVE by SOV factor
+        if (selections.linkSovAve && r.sovReach) {
+            const sovMultiplier = 1 + (parseFloat(r.sovReach) / 100);
+            if (r.impressionAve) r.impressionAve = (parseFloat(r.impressionAve) * sovMultiplier).toFixed(2);
+            if (r.engagementAve) r.engagementAve = (parseFloat(r.engagementAve) * sovMultiplier).toFixed(2);
+            if (r.videoViewAve) r.videoViewAve = (parseFloat(r.videoViewAve) * sovMultiplier).toFixed(2);
+            if (r.weightedAve) {
+                r.weightedAve = (parseFloat(r.impressionAve) + parseFloat(r.engagementAve) + parseFloat(r.videoViewAve)).toFixed(2);
+            }
+        }
+
+        // Weighted SOV — apply channel weights to SOV calculation
+        if (selections.weightedSov && selectedChannels.length > 0) {
+            const totalWeight = selectedChannels.reduce((sum, ch) => sum + (CHANNEL_WEIGHTS[ch] || 1.0), 0);
+            const avgWeight = totalWeight / selectedChannels.length;
+            if (r.sovReach) r.sovReach = (parseFloat(r.sovReach) * avgWeight).toFixed(2);
+            if (r.sovEngagement) r.sovEngagement = (parseFloat(r.sovEngagement) * avgWeight).toFixed(2);
         }
 
         setResults(r);
@@ -224,313 +390,378 @@ export const MediaAnalyzer = () => {
     const isActive = selections.sov || selections.ave;
 
     return (
-        <div className="space-y-6">
-            {/* Campaign Info */}
-            <CampaignInfo
-                formData={formData}
-                onInputChange={handleInputChange}
-                selectedChannels={selectedChannels}
-                onChannelChange={handleChannelChange}
-            />
+        <div className="flex flex-col lg:flex-row gap-6">
+            {/* Main Form (3/4 width on desktop) */}
+            <div className="flex-1 lg:w-3/4 space-y-6">
+                {/* Campaign Auto-Fill */}
+                <CampaignAutoFill onAutoFill={handleAutoFill} />
 
-            {/* Metric Selection */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Card
-                    className={`bg-card/50 backdrop-blur-sm border-white/5 cursor-pointer transition-all hover:border-[#0D9488]/40 ${selections.sov ? 'border-[#0D9488]/60 bg-[#0D9488]/5' : ''}`}
-                    onClick={() => toggle('sov')}
-                >
-                    <CardContent className="p-6">
-                        <div className="flex items-start gap-4">
-                            <Checkbox
-                                checked={selections.sov}
-                                onCheckedChange={(checked) => setSelections({ ...selections, sov: checked as boolean })}
-                                className="mt-1 h-5 w-5"
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                            <div>
-                                <div className="flex items-center gap-2 text-lg font-semibold">
-                                    <TrendingUp className="w-5 h-5 text-[#0D9488]" />
-                                    Share of Voice (SOV)
-                                </div>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    Measure brand visibility vs competitors and internal audience efficiency
-                                </p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                {/* Campaign Info */}
+                <CampaignInfo
+                    formData={formData}
+                    onInputChange={handleInputChange}
+                    selectedChannels={selectedChannels}
+                    onChannelChange={handleChannelChange}
+                />
 
-                <Card
-                    className={`bg-card/50 backdrop-blur-sm border-white/5 cursor-pointer transition-all hover:border-[#4F46E5]/40 ${selections.ave ? 'border-[#4F46E5]/60 bg-[#4F46E5]/5' : ''}`}
-                    onClick={() => toggle('ave')}
-                >
-                    <CardContent className="p-6">
-                        <div className="flex items-start gap-4">
-                            <Checkbox
-                                checked={selections.ave}
-                                onCheckedChange={(checked) => setSelections({ ...selections, ave: checked as boolean })}
-                                className="mt-1 h-5 w-5"
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                            <div>
-                                <div className="flex items-center gap-2 text-lg font-semibold">
-                                    <DollarSign className="w-5 h-5 text-[#4F46E5]" />
-                                    Advertising Value Equivalency (AVE)
-                                </div>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    Calculate equivalent advertising value of earned media
-                                </p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+                {/* Channel Breakdown — show when AVE is active and channels selected */}
+                {selections.ave && selectedChannels.length > 0 && (
+                    <ChannelBreakdown
+                        selectedChannels={selectedChannels}
+                        onChannelAVECalculated={handleChannelAVECalculated}
+                    />
+                )}
 
-            {/* SOV Sub-options */}
-            {selections.sov && (
-                <Card className="bg-card/50 backdrop-blur-sm border-white/5">
-                    <CardHeader className="pb-4">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <BarChart3 className="w-4 h-4 text-[#0D9488]" />
-                            SOV Analysis Type
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <label className="flex items-start gap-3 p-4 rounded-lg border border-white/[0.06] hover:border-[#0D9488]/30 transition-all cursor-pointer hover:bg-white/5">
-                                <Checkbox
-                                    checked={selections.sovExternal}
-                                    onCheckedChange={(checked) => setSelections({ ...selections, sovExternal: checked as boolean })}
-                                    className="mt-0.5 h-5 w-5"
-                                />
-                                <div>
-                                    <span className="font-semibold text-sm">External SOV (vs Category)</span>
-                                    <p className="text-xs text-muted-foreground mt-1">Compare against category benchmarks</p>
-                                </div>
-                            </label>
-                            <label className="flex items-start gap-3 p-4 rounded-lg border border-white/[0.06] hover:border-[#0D9488]/30 transition-all cursor-pointer hover:bg-white/5">
-                                <Checkbox
-                                    checked={selections.sovInternal}
-                                    onCheckedChange={(checked) => setSelections({ ...selections, sovInternal: checked as boolean })}
-                                    className="mt-0.5 h-5 w-5"
-                                />
-                                <div>
-                                    <span className="font-semibold text-sm">Internal Efficiency Metrics</span>
-                                    <p className="text-xs text-muted-foreground mt-1">Measure efficiency vs your own audience pool</p>
-                                </div>
-                            </label>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* Combined Options */}
-            {selections.sov && selections.ave && (
-                <Card className="bg-card/50 backdrop-blur-sm border-white/5">
-                    <CardHeader className="pb-4">
-                        <CardTitle className="text-base">Combined Analysis Options</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <label className="flex items-start gap-3 p-4 rounded-lg border border-white/[0.06] hover:border-white/20 transition-all cursor-pointer hover:bg-white/5">
-                                <Checkbox
-                                    checked={selections.linkSovAve}
-                                    onCheckedChange={(checked) => setSelections({ ...selections, linkSovAve: checked as boolean })}
-                                    className="mt-0.5 h-5 w-5"
-                                />
-                                <div>
-                                    <span className="font-semibold text-sm">Link SOV & AVE</span>
-                                    <p className="text-xs text-muted-foreground mt-1">Connect metrics for comprehensive analysis</p>
-                                </div>
-                            </label>
-                            <label className="flex items-start gap-3 p-4 rounded-lg border border-white/[0.06] hover:border-white/20 transition-all cursor-pointer hover:bg-white/5">
-                                <Checkbox
-                                    checked={selections.weightedAve}
-                                    onCheckedChange={(checked) => setSelections({ ...selections, weightedAve: checked as boolean })}
-                                    className="mt-0.5 h-5 w-5"
-                                />
-                                <div>
-                                    <span className="font-semibold text-sm">Weighted AVE Score</span>
-                                    <p className="text-xs text-muted-foreground mt-1">Calculate total weighted advertising value</p>
-                                </div>
-                            </label>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* External SOV Inputs */}
-            {selections.sovExternal && (
-                <Card className="bg-card/50 backdrop-blur-sm border-white/5">
-                    <CardHeader className="pb-4">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <Target className="w-4 h-4 text-[#0D9488]" />
-                            External SOV Inputs
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <NumberInput field="brandReach" label="Brand Reach" />
-                            <NumberInput field="categoryReach" label="Category Reach" />
-                            <NumberInput field="brandEngagement" label="Brand Engagement" />
-                            <NumberInput field="categoryEngagement" label="Category Engagement" />
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* Internal Efficiency Inputs */}
-            {selections.sovInternal && (
-                <Card className="bg-card/50 backdrop-blur-sm border-white/5">
-                    <CardHeader className="pb-4">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <Activity className="w-4 h-4 text-green-400" />
-                            Internal Efficiency Inputs
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <NumberInput field="totalReach" label="Total Reach" />
-                            <NumberInput field="totalAudiencePool" label="Total Audience Pool" />
-                            <NumberInput field="totalEngagement" label="Total Engagement" />
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* AVE Inputs */}
-            {selections.ave && (
-                <Card className="bg-card/50 backdrop-blur-sm border-white/5">
-                    <CardHeader className="pb-4">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <DollarSign className="w-4 h-4 text-[#4F46E5]" />
-                            AVE Calculation Inputs
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <NumberInput field="impressions" label="Total Impressions" />
-                            <NumberInput field="engagements" label="Total Engagements" />
-                            <NumberInput field="videoViews" label="Video Views" />
-                            <NumberInput field="cpm" label="CPM (Cost per 1,000 Impressions)" currency />
-                            <NumberInput field="cpe" label="CPE (Cost per Engagement)" currency />
-                            <NumberInput field="cpv" label="CPV (Cost per View)" currency />
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* Calculate Button */}
-            {isActive && (
-                <div className="flex justify-center">
-                    <Button
-                        onClick={validateAndCalculate}
-                        size="lg"
-                        className="h-14 px-10 text-base font-semibold bg-[#0D9488] hover:bg-[#0F766E] transition-colors shadow-lg"
+                {/* Metric Selection */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Card
+                        className={`bg-card/50 backdrop-blur-sm border-white/5 cursor-pointer transition-all hover:border-[#0D9488]/40 ${selections.sov ? 'border-[#0D9488]/60 bg-[#0D9488]/5' : ''}`}
+                        onClick={() => toggle('sov')}
                     >
-                        <Calculator className="mr-2 h-5 w-5" />
-                        Calculate Metrics
-                    </Button>
-                </div>
-            )}
-
-            {/* Results */}
-            {results && (
-                <Card className="bg-card/50 backdrop-blur-sm border-white/5">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <BarChart3 className="w-5 h-5 text-[#0D9488]" />
-                            Calculation Results
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {results.sovReach && (
-                                <ResultCard label="Share of Reach (SOV)" value={`${results.sovReach}%`} color="#0D9488" />
-                            )}
-                            {results.sovEngagement && (
-                                <ResultCard label="Share of Engagement (SOV)" value={`${results.sovEngagement}%`} color="#4F46E5" />
-                            )}
-                            {results.are && (
-                                <ResultCard label="Audience Reach Efficiency (ARE)" value={`${results.are}%`} color="#22c55e" />
-                            )}
-                            {results.ee && (
-                                <ResultCard label="Engagement Efficiency (EE)" value={`${results.ee}%`} color="#0D9488" />
-                            )}
-                            {results.taa && (
-                                <ResultCard label="Total Audience Activation (TAA)" value={`${results.taa}%`} color="#4F46E5" />
-                            )}
-                            {results.impressionAve && (
-                                <ResultCard
-                                    label="Impression-Based AVE"
-                                    value={`IDR ${parseFloat(results.impressionAve).toLocaleString('id-ID', { minimumFractionDigits: 2 })}`}
-                                    color="#22c55e"
+                        <CardContent className="p-6">
+                            <div className="flex items-start gap-4">
+                                <Checkbox
+                                    checked={selections.sov}
+                                    onCheckedChange={(checked) => setSelections({ ...selections, sov: checked as boolean })}
+                                    className="mt-1 h-5 w-5"
+                                    onClick={(e) => e.stopPropagation()}
                                 />
-                            )}
-                            {results.engagementAve && (
-                                <ResultCard
-                                    label="Engagement-Based AVE"
-                                    value={`IDR ${parseFloat(results.engagementAve).toLocaleString('id-ID', { minimumFractionDigits: 2 })}`}
-                                    color="#0D9488"
-                                />
-                            )}
-                            {results.videoViewAve && (
-                                <ResultCard
-                                    label="Video View-Based AVE"
-                                    value={`IDR ${parseFloat(results.videoViewAve).toLocaleString('id-ID', { minimumFractionDigits: 2 })}`}
-                                    color="#4F46E5"
-                                />
-                            )}
-                            {results.weightedAve && (
-                                <div className="sm:col-span-2 lg:col-span-3 p-6 rounded-xl bg-gradient-to-r from-[#0D9488] to-[#4F46E5]">
-                                    <p className="text-sm text-white/70 mb-1">Weighted AVE (Total)</p>
-                                    <p className="text-4xl font-bold text-white">
-                                        IDR {parseFloat(results.weightedAve).toLocaleString('id-ID', { minimumFractionDigits: 2 })}
+                                <div>
+                                    <div className="flex items-center gap-2 text-lg font-semibold">
+                                        <TrendingUp className="w-5 h-5 text-[#0D9488]" />
+                                        Share of Voice (SOV)
+                                    </div>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        Measure brand visibility vs competitors and internal audience efficiency
                                     </p>
                                 </div>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
+                            </div>
+                        </CardContent>
+                    </Card>
 
-            {/* AI Analysis */}
-            {aiAnalysis && (
-                <Card className="bg-card/50 backdrop-blur-sm border-white/5">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-[#0D9488]" />
-                            AI-Powered Analysis
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3">
-                            {aiAnalysis.split('\n').map((line, i) => {
-                                if (line.startsWith('## ')) {
-                                    return <h3 key={i} className="text-xl font-bold mt-4 mb-3">{line.replace('## ', '')}</h3>;
-                                }
-                                if (line.startsWith('**')) {
-                                    const parts = line.split('**');
-                                    return (
-                                        <p key={i} className="text-sm leading-relaxed">
-                                            {parts.map((part, j) =>
-                                                j % 2 === 1 ? <strong key={j} className="text-[#0D9488]">{part}</strong> : part
-                                            )}
+                    <Card
+                        className={`bg-card/50 backdrop-blur-sm border-white/5 cursor-pointer transition-all hover:border-[#4F46E5]/40 ${selections.ave ? 'border-[#4F46E5]/60 bg-[#4F46E5]/5' : ''}`}
+                        onClick={() => toggle('ave')}
+                    >
+                        <CardContent className="p-6">
+                            <div className="flex items-start gap-4">
+                                <Checkbox
+                                    checked={selections.ave}
+                                    onCheckedChange={(checked) => setSelections({ ...selections, ave: checked as boolean })}
+                                    className="mt-1 h-5 w-5"
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                                <div>
+                                    <div className="flex items-center gap-2 text-lg font-semibold">
+                                        <DollarSign className="w-5 h-5 text-[#4F46E5]" />
+                                        Advertising Value Equivalency (AVE)
+                                    </div>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        Calculate equivalent advertising value of earned media
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* SOV Sub-options */}
+                {selections.sov && (
+                    <Card className="bg-card/50 backdrop-blur-sm border-white/5">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <BarChart3 className="w-4 h-4 text-[#0D9488]" />
+                                SOV Analysis Type
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <label className="flex items-start gap-3 p-4 rounded-lg border border-white/[0.06] hover:border-[#0D9488]/30 transition-all cursor-pointer hover:bg-white/5">
+                                    <Checkbox
+                                        checked={selections.sovExternal}
+                                        onCheckedChange={(checked) => setSelections({ ...selections, sovExternal: checked as boolean })}
+                                        className="mt-0.5 h-5 w-5"
+                                    />
+                                    <div>
+                                        <span className="font-semibold text-sm">External SOV (vs Category)</span>
+                                        <p className="text-xs text-muted-foreground mt-1">Compare against category benchmarks</p>
+                                    </div>
+                                </label>
+                                <label className="flex items-start gap-3 p-4 rounded-lg border border-white/[0.06] hover:border-[#0D9488]/30 transition-all cursor-pointer hover:bg-white/5">
+                                    <Checkbox
+                                        checked={selections.sovInternal}
+                                        onCheckedChange={(checked) => setSelections({ ...selections, sovInternal: checked as boolean })}
+                                        className="mt-0.5 h-5 w-5"
+                                    />
+                                    <div>
+                                        <span className="font-semibold text-sm">Internal Efficiency Metrics</span>
+                                        <p className="text-xs text-muted-foreground mt-1">Measure efficiency vs your own audience pool</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Combined Options */}
+                {selections.sov && selections.ave && (
+                    <Card className="bg-card/50 backdrop-blur-sm border-white/5">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-base">Combined Analysis Options</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <label className="flex items-start gap-3 p-4 rounded-lg border border-white/[0.06] hover:border-white/20 transition-all cursor-pointer hover:bg-white/5">
+                                    <Checkbox
+                                        checked={selections.linkSovAve}
+                                        onCheckedChange={(checked) => setSelections({ ...selections, linkSovAve: checked as boolean })}
+                                        className="mt-0.5 h-5 w-5"
+                                    />
+                                    <div>
+                                        <span className="font-semibold text-sm">Link SOV & AVE</span>
+                                        <p className="text-xs text-muted-foreground mt-1">Multiply AVE by SOV factor for comprehensive analysis</p>
+                                    </div>
+                                </label>
+                                <label className="flex items-start gap-3 p-4 rounded-lg border border-white/[0.06] hover:border-white/20 transition-all cursor-pointer hover:bg-white/5">
+                                    <Checkbox
+                                        checked={selections.weightedSov}
+                                        onCheckedChange={(checked) => setSelections({ ...selections, weightedSov: checked as boolean })}
+                                        className="mt-0.5 h-5 w-5"
+                                    />
+                                    <div>
+                                        <span className="font-semibold text-sm">Weighted SOV</span>
+                                        <p className="text-xs text-muted-foreground mt-1">Apply channel weights to SOV calculation</p>
+                                    </div>
+                                </label>
+                                <label className="flex items-start gap-3 p-4 rounded-lg border border-white/[0.06] hover:border-white/20 transition-all cursor-pointer hover:bg-white/5">
+                                    <Checkbox
+                                        checked={selections.weightedAve}
+                                        onCheckedChange={(checked) => setSelections({ ...selections, weightedAve: checked as boolean })}
+                                        className="mt-0.5 h-5 w-5"
+                                    />
+                                    <div>
+                                        <span className="font-semibold text-sm">Weighted AVE Score</span>
+                                        <p className="text-xs text-muted-foreground mt-1">Calculate total weighted advertising value</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* External SOV Inputs */}
+                {selections.sovExternal && (
+                    <Card className="bg-card/50 backdrop-blur-sm border-white/5">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <Target className="w-4 h-4 text-[#0D9488]" />
+                                External SOV Inputs
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <NumberInput field="brandReach" label="Brand Reach" />
+                                <NumberInput field="categoryReach" label="Category Reach" />
+                                <NumberInput field="brandEngagement" label="Brand Engagement" />
+                                <NumberInput field="categoryEngagement" label="Category Engagement" />
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Internal Efficiency Inputs */}
+                {selections.sovInternal && (
+                    <Card className="bg-card/50 backdrop-blur-sm border-white/5">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <Activity className="w-4 h-4 text-green-400" />
+                                Internal Efficiency Inputs
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <NumberInput field="totalReach" label="Total Reach" />
+                                <NumberInput field="totalAudiencePool" label="Total Audience Pool" />
+                                <NumberInput field="totalEngagement" label="Total Engagement" />
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* AVE Inputs */}
+                {selections.ave && (
+                    <Card className="bg-card/50 backdrop-blur-sm border-white/5">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <DollarSign className="w-4 h-4 text-[#4F46E5]" />
+                                AVE Calculation Inputs
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <NumberInput field="impressions" label="Total Impressions" />
+                                <NumberInput field="engagements" label="Total Engagements" />
+                                <NumberInput field="videoViews" label="Video Views" />
+                                <NumberInput field="cpm" label="CPM (Cost per 1,000 Impressions)" currency />
+                                <NumberInput field="cpe" label="CPE (Cost per Engagement)" currency />
+                                <NumberInput field="cpv" label="CPV (Cost per View)" currency />
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Calculate + Save Buttons */}
+                {isActive && (
+                    <div className="flex justify-center gap-4">
+                        <Button
+                            onClick={validateAndCalculate}
+                            size="lg"
+                            className="h-14 px-10 text-base font-semibold bg-[#0D9488] hover:bg-[#0F766E] transition-colors shadow-lg"
+                        >
+                            <Calculator className="mr-2 h-5 w-5" />
+                            Calculate Metrics
+                        </Button>
+                        {results && (
+                            <Button
+                                onClick={handleSave}
+                                disabled={saving}
+                                size="lg"
+                                variant="outline"
+                                className="h-14 px-8 text-base font-semibold border-white/10 hover:bg-white/5 transition-colors"
+                            >
+                                {saving ? (
+                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                ) : (
+                                    <Save className="mr-2 h-5 w-5" />
+                                )}
+                                {saving ? 'Saving...' : 'Save'}
+                            </Button>
+                        )}
+                    </div>
+                )}
+
+                {/* Results */}
+                {results && (
+                    <Card className="bg-card/50 backdrop-blur-sm border-white/5">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <BarChart3 className="w-5 h-5 text-[#0D9488]" />
+                                Calculation Results
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {results.sovReach && (
+                                    <ResultCard label="Share of Reach (SOV)" value={`${results.sovReach}%`} color="#0D9488" />
+                                )}
+                                {results.sovEngagement && (
+                                    <ResultCard label="Share of Engagement (SOV)" value={`${results.sovEngagement}%`} color="#4F46E5" />
+                                )}
+                                {results.are && (
+                                    <ResultCard label="Audience Reach Efficiency (ARE)" value={`${results.are}%`} color="#22c55e" />
+                                )}
+                                {results.ee && (
+                                    <ResultCard label="Engagement Efficiency (EE)" value={`${results.ee}%`} color="#0D9488" />
+                                )}
+                                {results.taa && (
+                                    <ResultCard label="Total Audience Activation (TAA)" value={`${results.taa}%`} color="#4F46E5" />
+                                )}
+                                {results.impressionAve && (
+                                    <ResultCard
+                                        label="Impression-Based AVE"
+                                        value={`IDR ${parseFloat(results.impressionAve).toLocaleString('id-ID', { minimumFractionDigits: 2 })}`}
+                                        color="#22c55e"
+                                    />
+                                )}
+                                {results.engagementAve && (
+                                    <ResultCard
+                                        label="Engagement-Based AVE"
+                                        value={`IDR ${parseFloat(results.engagementAve).toLocaleString('id-ID', { minimumFractionDigits: 2 })}`}
+                                        color="#0D9488"
+                                    />
+                                )}
+                                {results.videoViewAve && (
+                                    <ResultCard
+                                        label="Video View-Based AVE"
+                                        value={`IDR ${parseFloat(results.videoViewAve).toLocaleString('id-ID', { minimumFractionDigits: 2 })}`}
+                                        color="#4F46E5"
+                                    />
+                                )}
+                                {results.weightedAve && (
+                                    <div className="sm:col-span-2 lg:col-span-3 p-6 rounded-xl bg-gradient-to-r from-[#0D9488] to-[#4F46E5]">
+                                        <p className="text-sm text-white/70 mb-1">Weighted AVE (Total)</p>
+                                        <p className="text-4xl font-bold text-white">
+                                            IDR {parseFloat(results.weightedAve).toLocaleString('id-ID', { minimumFractionDigits: 2 })}
                                         </p>
-                                    );
-                                }
-                                if (line.startsWith('-')) {
-                                    return <li key={i} className="text-sm text-muted-foreground ml-4">{line.replace('- ', '')}</li>;
-                                }
-                                if (line.trim()) {
-                                    return <p key={i} className="text-sm text-muted-foreground">{line}</p>;
-                                }
-                                return null;
-                            })}
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* AVE Export — show when results exist */}
+                {results && (
+                    <AVEExport
+                        campaignInfo={{
+                            brandName: formData.brandName || '',
+                            campaignName: formData.campaignName || '',
+                            campaignType: formData.campaignType || '',
+                            campaignObjective: formData.campaignObjective || '',
+                            categoryBusiness: formData.categoryBusiness || '',
+                        }}
+                        results={results}
+                        channels={selectedChannels}
+                        aiAnalysis={aiAnalysis}
+                    />
+                )}
+
+                {/* AI Analysis */}
+                {aiAnalysis && (
+                    <Card className="bg-card/50 backdrop-blur-sm border-white/5">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Sparkles className="w-5 h-5 text-[#0D9488]" />
+                                AI-Powered Analysis
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                {aiAnalysis.split('\n').map((line, i) => {
+                                    if (line.startsWith('## ')) {
+                                        return <h3 key={i} className="text-xl font-bold mt-4 mb-3">{line.replace('## ', '')}</h3>;
+                                    }
+                                    if (line.startsWith('**')) {
+                                        const parts = line.split('**');
+                                        return (
+                                            <p key={i} className="text-sm leading-relaxed">
+                                                {parts.map((part, j) =>
+                                                    j % 2 === 1 ? <strong key={j} className="text-[#0D9488]">{part}</strong> : part
+                                                )}
+                                            </p>
+                                        );
+                                    }
+                                    if (line.startsWith('-')) {
+                                        return <li key={i} className="text-sm text-muted-foreground ml-4">{line.replace('- ', '')}</li>;
+                                    }
+                                    if (line.trim()) {
+                                        return <p key={i} className="text-sm text-muted-foreground">{line}</p>;
+                                    }
+                                    return null;
+                                })}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
+
+            {/* History Panel (1/4 width on desktop, full width on mobile) */}
+            <div className="w-full lg:w-1/4 lg:min-w-[280px]">
+                <CalculationHistory
+                    brandId={brandId}
+                    onLoad={handleLoadFromHistory}
+                />
+            </div>
         </div>
     );
 };
