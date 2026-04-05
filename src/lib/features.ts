@@ -28,6 +28,8 @@ export const ALL_FEATURES: Feature[] = [
     { key: 'future-products', label: 'Future Products', section: 'Growth & Revenue', href: '/admin/future-products' },
     { key: 'analytics', label: 'Analytics & Tracking', section: 'Growth & Revenue', href: '/admin/analytics' },
     { key: 'whitelabel', label: 'Whitelabel System', section: 'Growth & Revenue', href: '/admin/whitelabel' },
+    { key: 'benchmarks', label: 'Benchmarks', section: 'Growth & Revenue', href: '/admin/benchmarks' },
+    { key: 'attribution', label: 'Attribution', section: 'Growth & Revenue', href: '/admin/attribution' },
     { key: 'billing', label: 'Billing & Referrals', section: 'Growth & Revenue', href: '/admin/billing' },
     // Platform
     { key: 'integrations', label: 'Integrations', section: 'Platform', href: '/admin/integrations' },
