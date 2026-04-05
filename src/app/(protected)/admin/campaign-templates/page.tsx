@@ -488,12 +488,16 @@ function UseTemplateDialog({
     const router = useRouter();
     const [campaignName, setCampaignName] = useState('');
     const [brandId, setBrandId] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [creating, setCreating] = useState(false);
 
     useEffect(() => {
         if (open) {
             setCampaignName('');
             setBrandId(template?.brandId || '');
+            setStartDate('');
+            setEndDate('');
         }
     }, [open, template]);
 
@@ -560,6 +564,52 @@ function UseTemplateDialog({
                         </Select>
                     </div>
 
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                                Start Date
+                            </Label>
+                            <Input
+                                type="date"
+                                value={startDate}
+                                onChange={e => setStartDate(e.target.value)}
+                                className="mt-1.5 bg-white/[0.03] border-white/[0.06]"
+                            />
+                        </div>
+                        <div>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                                End Date
+                            </Label>
+                            <Input
+                                type="date"
+                                value={endDate}
+                                onChange={e => setEndDate(e.target.value)}
+                                className="mt-1.5 bg-white/[0.03] border-white/[0.06]"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Template structure preview */}
+                    {template && (
+                        <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-3 space-y-1.5">
+                            <div className="text-[10px] font-bold text-white/30 uppercase tracking-wider">
+                                Template includes
+                            </div>
+                            {(() => {
+                                const s = parseStructure(template.structure);
+                                return (
+                                    <div className="text-xs text-white/50">
+                                        {s.channels.length} channel{s.channels.length !== 1 ? 's' : ''},{' '}
+                                        {s.subCampaigns.length} sub-campaign{s.subCampaigns.length !== 1 ? 's' : ''}
+                                        {s.budgetSplits.total > 0
+                                            ? `, ${formatBudget(s.budgetSplits.total)} budget`
+                                            : ''}
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    )}
+
                     <div className="flex justify-end gap-3 pt-2">
                         <Button
                             type="button"
@@ -595,6 +645,7 @@ export default function CampaignTemplatesPage() {
     const [createOpen, setCreateOpen] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState<CampaignTemplate | null>(null);
     const [useTemplate, setUseTemplate] = useState<CampaignTemplate | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<CampaignTemplate | null>(null);
 
     const fetchTemplates = useCallback(async () => {
         try {
@@ -613,11 +664,12 @@ export default function CampaignTemplatesPage() {
         api.channels.getAll().then(setChannels).catch(() => {});
     }, [fetchTemplates]);
 
-    async function handleDelete(template: CampaignTemplate) {
-        if (!confirm(`Delete template "${template.name}"? This cannot be undone.`)) return;
+    async function handleConfirmDelete() {
+        if (!deleteTarget) return;
         try {
-            await api.campaignTemplates.delete(template.id);
+            await api.campaignTemplates.delete(deleteTarget.id);
             toast.success('Template deleted');
+            setDeleteTarget(null);
             fetchTemplates();
         } catch {
             toast.error('Failed to delete template');
@@ -638,9 +690,9 @@ export default function CampaignTemplatesPage() {
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <PageHeader
                 icon={LayoutTemplate}
-                category="Campaign Management"
+                category="Operations"
                 title="Campaign Templates"
-                description="Reusable campaign structures for quick campaign creation."
+                description="Create and manage reusable campaign structures. Templates define channels, sub-campaigns, and budget allocations that can be applied to new campaigns instantly."
                 actions={
                     <button
                         onClick={() => { setEditingTemplate(null); setCreateOpen(true); }}
@@ -667,7 +719,7 @@ export default function CampaignTemplatesPage() {
                             template={template}
                             onUse={() => setUseTemplate(template)}
                             onEdit={() => handleEdit(template)}
-                            onDelete={() => handleDelete(template)}
+                            onDelete={() => setDeleteTarget(template)}
                         />
                     ))}
                 </div>
@@ -689,6 +741,32 @@ export default function CampaignTemplatesPage() {
                 template={useTemplate}
                 brands={brands}
             />
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+                <DialogContent className="max-w-sm bg-[#0B1120] border-white/[0.06] text-white">
+                    <DialogTitle className="text-lg font-bold">Delete Template</DialogTitle>
+                    <p className="text-sm text-white/40 mt-1">
+                        This action cannot be undone. The template <span className="text-white/70 font-medium">&quot;{deleteTarget?.name}&quot;</span> will be permanently removed.
+                    </p>
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => setDeleteTarget(null)}
+                            className="text-white/50 hover:text-white/70"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleConfirmDelete}
+                            className="bg-red-600 hover:bg-red-700 text-white font-bold"
+                        >
+                            Delete
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
