@@ -440,6 +440,15 @@ export const api = {
             body: JSON.stringify(credentials),
         }),
     },
+    mediaAnalysis: {
+        getAll: (query?: { brandId?: string; campaignId?: string }) => {
+            const qs = query ? '?' + new URLSearchParams(query as Record<string, string>).toString() : '';
+            return fetchClient<any[]>(`/media-analysis${qs}`);
+        },
+        save: (data: any) => fetchClient<any>('/media-analysis', { method: 'POST', body: JSON.stringify(data) }),
+        delete: (id: string) => fetchClient<any>(`/media-analysis?id=${id}`, { method: 'DELETE' }),
+    },
+
     integrations: {
         googleAds: {
             getAuthUrl: (brandId: string) => fetchClient<{ url: string }>(`/integrations/google-ads/auth?brandId=${brandId}`),

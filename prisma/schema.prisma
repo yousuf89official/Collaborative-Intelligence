@@ -848,3 +848,20 @@ model DashboardLayout {
 
   @@index([userId])
 }
+
+// ─── Media Analysis (AVE Calculator) ────────────────────────────────────────
+model MediaAnalysis {
+  id          String   @id @default(cuid())
+  brandId     String
+  campaignId  String?
+  name        String
+  inputs      String   // JSON: all form inputs
+  results     String   // JSON: all calculated results
+  aiAnalysis  String?  // Generated analysis text
+  channels    String?  // JSON: selected channel list
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([brandId])
+  @@index([createdBy])
+}
