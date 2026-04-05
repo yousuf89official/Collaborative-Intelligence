@@ -29,8 +29,8 @@ import { getWidgetById, type WidgetLayoutItem } from '@/lib/widget-registry';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { BudgetPacingWidget } from '@/components/campaigns/BudgetPacingWidget';
-import { AIInsights } from '@/components/campaigns/AIInsights';
-import { AlertsPanel } from '@/components/campaigns/AlertsPanel';
+import AIInsights from '@/components/campaigns/AIInsights';
+import AlertsPanel from '@/components/campaigns/AlertsPanel';
 
 // ─── Icon Map ───────────────────────────────────────────────────────────────
 
